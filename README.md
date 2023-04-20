@@ -1,2 +1,5 @@
-# dqubr-project
-Some random application for cubers. What is CFOP?
+# dQubr Project
+Some random application for cubers. Made in Python because.
+
+## Required Dependencies
+- PyGame
