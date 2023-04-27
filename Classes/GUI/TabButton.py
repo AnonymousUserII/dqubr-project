@@ -1,10 +1,8 @@
 from os.path import join
 import pygame
 
-from Classes.Button import Button
-DARK_GREY: pygame.Color = pygame.Color(0x10, 0x10, 0x10)
-FRAME_COLOR: pygame.Color = pygame.Color(0xAE, 0xDF, 0xFC)
-REST_BTN_COLOR: pygame.Color = pygame.Color(0x8A, 0xD2, 0xFB)
+from Assets.colors import DARK_GREY, FRAME_COLOR, REST_BTN_COLOR
+from Classes.GUI.Button import Button
 
 
 class TabButton(Button):
@@ -25,7 +23,7 @@ class TabButton(Button):
         self.shadow_rect.top -= 3
     
     def update(self, active: bool = False) -> None:
-        super().update_state()
+        super().update()
         self.color = self.hover_color if self.hover or active else self.bg_color
         return None
     

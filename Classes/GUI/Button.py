@@ -7,7 +7,7 @@ class Button:
         self.rect: pygame.Rect = pygame.Rect(self.pos, self.size)
         self.hover, self.clicked, self.click_cooldown = False, False, False
     
-    def update_state(self) -> None:
+    def update(self) -> None:
         self.hover = self.rect.collidepoint(pygame.mouse.get_pos())
         lmb_clicked: bool = pygame.mouse.get_pressed()[0]
         self.clicked = self.hover and lmb_clicked and not self.click_cooldown

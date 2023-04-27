@@ -45,3 +45,4 @@ class Face3:
             (self.ur, self.u, self.ul), self.r, (self.dr, self.d, self.dl), self.l = \
                 self.left(), self.u, self.right(), self.d
         return None
+    
