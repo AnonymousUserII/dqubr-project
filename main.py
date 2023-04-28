@@ -49,26 +49,31 @@ def program_window():
     cfop_tab_btn: TabButton = TabButton(window, (260, 10), (200, 60), "CFOP Solver")
     time_tab_btn: TabButton = TabButton(window, (470, 10), (200, 60), "Times")
     active_tab: int = Tab.QUBE.value
+
+    qube = Qube3()
+    qube_size: int = 3
+    is_qube_form: bool = False
+    
+    qube_renderers: tuple = (None, None, QubeRender3, None)
     
     # GUI elements of each tab
-    qube_tab_gui: tuple = (TextBox(window, (500, 500), 60, "Turning and turning", DARK_GREY),
-                           
-                           TextBox(window, (1000, 100), 32, "Cube Size", DARK_GREY),
-                           RadioButtons(window, (950, 150), ("1x1x1", "2x2x2", "3x3x3", "4x4x4"), DARK_GREY, 2),
-                           
-                           ColoredBox(window, (40, 80), (800, 600), LAYER1_COLOR),
-                           TextBox(window, (120, 100), 24, "Cube Style", DARK_GREY),
-                           TextBox(window, (75, 131), 18, "Net", DARK_GREY),
-                           ToggleBox(window, (100, 125), DARK_GREY),
-                           TextBox(window, (160, 132), 18, "Cube", DARK_GREY),
-                           
-                           QubeRender3(window, (400, 400))
-                           )
+    qube_tab_gui: list = [TextBox(window, (500, 500), 60, "Turning and turning", DARK_GREY),
+                          
+                          TextBox(window, (1000, 100), 32, "Cube Size", DARK_GREY),
+                          RadioButtons(window, (950, 150), ("1x1x1", "2x2x2", "3x3x3", "4x4x4"), DARK_GREY, 2),
+                          
+                          ColoredBox(window, (40, 80), (800, 600), LAYER1_COLOR),
+                          TextBox(window, (120, 100), 24, "Cube Style", DARK_GREY),
+                          TextBox(window, (75, 131), 18, "Net", DARK_GREY),
+                          ToggleBox(window, (100, 125), DARK_GREY, False),
+                          TextBox(window, (160, 132), 18, "Cube", DARK_GREY),
+                          
+                          QubeRender3(window, (400, 400), qube_size, is_qube_form)]
     cfop_tab_gui: tuple = (TextBox(window, (700, 300), 60, "Solving this and that", DARK_GREY),)
-    time_tab_gui: tuple = (TextBox(window, (600, 600), 60, "Times are a\'changing", DARK_GREY),)
+    time_tab_gui: tuple = (TextBox(window, (600, 600), 60, "Times are a\'changing", DARK_GREY),
+                           TextBox(window, (400, 400), 60, "00", DARK_GREY))
     guis: tuple = qube_tab_gui, cfop_tab_gui, time_tab_gui
     
-    qube = Qube3()
     fc, xc, yc, zc, rc, lc, uc, dc, bc, mc = False, False, False, False, False, False, False, False, False, False
 
     running: bool = True
@@ -180,13 +185,22 @@ def program_window():
         for element in guis[active_tab]:
             try:
                 element.update()
-            except AttributeError:
+                if type(element) == ToggleBox:
+                    if active_tab == Tab.QUBE.value:
+                        is_qube_form = element.state
+                if type(element) == RadioButtons:
+                    if active_tab == Tab.QUBE.value:
+                        qube_size = element.selected + 1
+            except AttributeError:  # Element is static
                 pass
+            
+            # Update Qube Render
+            qube_tab_gui[-1] = qube_renderers[qube_size - 1](window, qube_tab_gui[-1].pos, qube_size, is_qube_form)
             
             try:
                 element.draw()
-            except TypeError:
-                element.draw(qube)
+            except TypeError:  # Is QubeRenderer
+                qube_tab_gui[-1].draw(qube)
         
         pygame.display.update()
         clock.tick(_TICK_RATE)
