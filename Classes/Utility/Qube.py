@@ -1,6 +1,61 @@
 from Classes.Utility.Face import *
 
 
+def generate_shuffle(moves: int = 40, contract_doubles: bool = False) -> list[str]:
+    from random import random, choice
+    possible_moves: tuple = "R", "L", "U", "D", "F", "B", "M"
+    random_moveset: list[str] = []
+    for _ in range(moves):
+        random_moveset.append(choice(possible_moves))
+        if round(random()) == 1:
+            random_moveset[-1] += "\'"  # 50/50 for move to be primed
+    
+    # Check for redundant moves
+    move_string: str = '&'.join(random_moveset)
+    for move in possible_moves:
+        # Remove four-in-a-row
+        while f"{move}&{move}&{move}&{move}" in move_string:
+            move_string = move_string.replace(f"{move}&{move}&{move}&{move}", "")
+            move_string.replace("&&", "&")
+        while f"{move}\'&{move}\'&{move}\'&{move}\'" in move_string:
+            move_string = move_string.replace(f"{move}\'&{move}\'&{move}\'&{move}\'", "")
+            move_string.replace("&&", "&")
+        
+        # Remove consecutive reversals, e.g. D&D'
+        while f"{move}&{move}\'" in move_string:
+            move_string = move_string.replace(f"{move}&{move}\'", "")
+            move_string.replace("&&", "&")
+        while f"{move}\'&{move}" in move_string:
+            move_string = move_string.replace(f"{move}\'&{move}", "")
+            move_string.replace("&&", "&")
+        
+        # Contract triples then doubles
+        while f"{move}&{move}&{move}" in move_string:
+            move_string = move_string.replace(f"{move}&{move}&{move}", "")
+            move_string.replace("&&", "&")
+        while f"{move}\'&{move}\'&{move}\'" in move_string:
+            move_string = move_string.replace(f"{move}\'&{move}\'&{move}\'", "")
+            move_string.replace("&&", "&")
+        if contract_doubles:
+            while f"{move}&{move}" in move_string:
+                move_string = move_string.replace(f"{move}&{move}", "")
+                move_string.replace("&&", "&")
+            while f"{move}\'&{move}\'" in move_string:
+                move_string = move_string.replace(f"{move}\'&{move}\'", "")
+                move_string.replace("&&", "&")
+        
+        while "&&" in move_string:  # Remove extra separators
+            move_string = move_string.replace("&&", "&")
+    generated_moves = move_string.split('&')
+    # Remove empty moves
+    while "" in generated_moves:
+        generated_moves.remove("")
+    while "\'" in generated_moves:
+        generated_moves.remove("\'")
+    
+    return generated_moves
+
+
 class Qube3:
     def __init__(self):
         self.up: Face3 = Face3(tuple(1 for _ in range(9)))
@@ -161,9 +216,9 @@ class Qube3:
         return None
     
     def m(self, prime: bool = False) -> None:
-        self.l(prime)
-        self.r(not prime)
-        self.x(prime)
+        self.l(not prime)
+        self.r(prime)
+        self.x(not prime)
         return None
     
     def e(self, prime: bool = False) -> None:
@@ -176,4 +231,30 @@ class Qube3:
         self.f(not prime)
         self.b(prime)
         self.z(prime)
+        return None
+    
+    def apply_moves(self, moves: list | tuple) -> None:
+        """
+        Accepts an iterable sequence of moves in character form.
+        """
+        for move in moves:
+            prime: bool = '\'' in move
+            if 'R' in move:
+                self.r(prime)
+            elif 'L' in move:
+                self.l(prime)
+            elif 'F' in move:
+                self.f(prime)
+            elif 'B' in move:
+                self.b(prime)
+            elif 'U' in move:
+                self.u(prime)
+            elif 'D' in move:
+                self.d(prime)
+            elif 'M' in move:
+                self.m(prime)
+            elif 'E' in move:
+                self.e(prime)
+            elif 'S' in move:
+                self.s(prime)
         return None

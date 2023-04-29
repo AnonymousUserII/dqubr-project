@@ -53,6 +53,7 @@ def program_window():
     qube = Qube3()
     qube_size: int = 3
     is_qube_form: bool = False
+    move_history: list[str] = []
     
     qube_renderers: tuple = (None, None, QubeRender3, None)
     
@@ -68,6 +69,9 @@ def program_window():
                           ToggleBox(window, (100, 125), DARK_GREY, False),
                           TextBox(window, (160, 132), 18, "Cube", DARK_GREY),
                           
+                          TextBox(window, (160, 710), 36, "Move History", DARK_GREY),
+                          TextBox(window, (160, 750), 16, "", DARK_GREY, True),
+                          
                           QubeRender3(window, (400, 400), qube_size, is_qube_form)]
     cfop_tab_gui: tuple = (TextBox(window, (700, 300), 60, "Solving this and that", DARK_GREY),)
     time_tab_gui: tuple = (TextBox(window, (600, 600), 60, "Times are a\'changing", DARK_GREY),
@@ -75,6 +79,7 @@ def program_window():
     guis: tuple = qube_tab_gui, cfop_tab_gui, time_tab_gui
     
     fc, xc, yc, zc, rc, lc, uc, dc, bc, mc = False, False, False, False, False, False, False, False, False, False
+    undo_cool = False
 
     running: bool = True
     while running:
@@ -92,96 +97,130 @@ def program_window():
             tab_button.draw()
         
         if 1:
-            # cst = "–––––––––––––––––––––––––––––––\n"\
-            #       f"          {qube.up.up()}\n"\
-            #       f"          {qube.up.mid_h()}\n"\
-            #       f"          {qube.up.down()}\n"\
-            #       f"{qube.left.up()} {qube.front.up()} {qube.right.up()} {qube.back.up()}\n"\
-            #       f"{qube.left.mid_h()} {qube.front.mid_h()} {qube.right.mid_h()} {qube.back.mid_h()}\n"\
-            #       f"{qube.left.down()} {qube.front.down()} {qube.right.down()} {qube.back.down()}\n"\
-            #       f"          {qube.down.up()}\n"\
-            #       f"          {qube.down.mid_h()}\n"\
-            #       f"          {qube.down.down()}\n"
-            
             keys_pressed: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
+            yes_prime: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
+            old_m_history: int = len(move_history)
             if keys_pressed[pygame.K_f] and not fc:
-                qube.f(keys_pressed[pygame.K_LSHIFT])
+                qube.f(yes_prime)
+                move_history.append("F" + ("\'" if yes_prime else ""))
                 fc = True
             elif not keys_pressed[pygame.K_f]:
                 fc = False
             
             if keys_pressed[pygame.K_x] and not xc:
-                qube.x(keys_pressed[pygame.K_LSHIFT])
+                qube.x(yes_prime)
+                move_history.append("x" + ("\'" if yes_prime else ""))
                 xc = True
             elif not keys_pressed[pygame.K_x]:
                 xc = False
             
             if keys_pressed[pygame.K_y] and not yc:
-                qube.y(keys_pressed[pygame.K_LSHIFT])
+                qube.y(yes_prime)
+                move_history.append("y" + ("\'" if yes_prime else ""))
                 yc = True
             elif not keys_pressed[pygame.K_y]:
                 yc = False
             
             if keys_pressed[pygame.K_z] and not zc:
-                qube.z(keys_pressed[pygame.K_LSHIFT])
+                qube.z(yes_prime)
+                move_history.append("z" + ("\'" if yes_prime else ""))
                 zc = True
             elif not keys_pressed[pygame.K_z]:
                 zc = False
 
             if keys_pressed[pygame.K_r] and not rc:
-                qube.r(keys_pressed[pygame.K_LSHIFT])
+                qube.r(yes_prime)
+                move_history.append("R" + ("\'" if yes_prime else ""))
                 rc = True
             elif not keys_pressed[pygame.K_r]:
                 rc = False
 
             if keys_pressed[pygame.K_l] and not lc:
-                qube.l(keys_pressed[pygame.K_LSHIFT])
+                qube.l(yes_prime)
+                move_history.append("L" + ("\'" if yes_prime else ""))
                 lc = True
             elif not keys_pressed[pygame.K_l]:
                 lc = False
 
             if keys_pressed[pygame.K_u] and not uc:
-                qube.u(keys_pressed[pygame.K_LSHIFT])
+                qube.u(yes_prime)
+                move_history.append("U" + ("\'" if yes_prime else ""))
                 uc = True
             elif not keys_pressed[pygame.K_u]:
                 uc = False
 
             if keys_pressed[pygame.K_d] and not dc:
-                qube.d(keys_pressed[pygame.K_LSHIFT])
+                qube.d(yes_prime)
+                move_history.append("D" + ("\'" if yes_prime else ""))
                 dc = True
             elif not keys_pressed[pygame.K_d]:
                 dc = False
             
             if keys_pressed[pygame.K_b] and not bc:
-                qube.b(keys_pressed[pygame.K_LSHIFT])
+                qube.b(yes_prime)
+                move_history.append("B" + ("\'" if yes_prime else ""))
                 bc = True
             elif not keys_pressed[pygame.K_b]:
                 bc = False
             
             if keys_pressed[pygame.K_m] and not mc:
-                qube.m(keys_pressed[pygame.K_LSHIFT])
+                qube.m(yes_prime)
+                move_history.append("M" + ("\'" if yes_prime else ""))
                 mc = True
             elif not keys_pressed[pygame.K_m]:
                 mc = False
             
+            try:  # Temporary undo system
+                if keys_pressed[pygame.K_BACKQUOTE] and not undo_cool:
+                    prime: bool = "\'" not in move_history[-1]
+                    if 'R' in move_history[-1]:
+                        qube.r(prime)
+                    elif 'L' in move_history[-1]:
+                        qube.l(prime)
+                    elif 'F' in move_history[-1]:
+                        qube.f(prime)
+                    elif 'B' in move_history[-1]:
+                        qube.b(prime)
+                    elif 'U' in move_history[-1]:
+                        qube.u(prime)
+                    elif 'D' in move_history[-1]:
+                        qube.d(prime)
+                    elif 'M' in move_history[-1]:
+                        qube.m(prime)
+                    elif 'E' in move_history[-1]:
+                        qube.e(prime)
+                    elif 'S' in move_history[-1]:
+                        qube.s(prime)
+                    elif 'x' in move_history[-1]:
+                        qube.x(prime)
+                    elif 'y' in move_history[-1]:
+                        qube.y(prime)
+                    elif 'z' in move_history[-1]:
+                        qube.z(prime)
+                    move_history.pop(-1)
+                    undo_cool = True
+                elif not keys_pressed[pygame.K_BACKQUOTE]:
+                    undo_cool = False
+            except IndexError:  # No recorded moves
+                pass
+            
+            if old_m_history != len(move_history):  # If a move was made
+                # Set textbox to original (from scramble sequence)
+                qube_tab_gui[-3] = TextBox(window, (37, 710), 36, "Move History", DARK_GREY, True)
+            
+            if keys_pressed[pygame.K_F8]:
+                random_move_attempts: int = 40
+                qube.reset()
+                scramble = generate_shuffle(random_move_attempts)
+                qube.apply_moves(scramble)
+                move_history = scramble
+                qube_tab_gui[-3] = TextBox(window, (37, 710), 36, "Moves to Scramble", DARK_GREY, True)
+            
             if keys_pressed[pygame.K_F5]:
                 qube.reset()
-            
-            # dst = "–––––––––––––––––––––––––––––––\n"\
-            #       f"          {qube.up.up()}\n"\
-            #       f"          {qube.up.mid_h()}\n"\
-            #       f"          {qube.up.down()}\n"\
-            #       f"{qube.left.up()} {qube.front.up()} {qube.right.up()} {qube.back.up()}\n"\
-            #       f"{qube.left.mid_h()} {qube.front.mid_h()} {qube.right.mid_h()} {qube.back.mid_h()}\n"\
-            #       f"{qube.left.down()} {qube.front.down()} {qube.right.down()} {qube.back.down()}\n"\
-            #       f"          {qube.down.up()}\n"\
-            #       f"          {qube.down.mid_h()}\n"\
-            #       f"          {qube.down.down()}\n"
-            #
-            # if cst != dst:
-            #     print(dst)
+                move_history.clear()
         
-        pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 820)), border_radius=12)  # Tab Background
+        pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 820)), border_radius=20)  # Tab Background
         for element in guis[active_tab]:
             try:
                 element.update()
@@ -194,8 +233,12 @@ def program_window():
             except AttributeError:  # Element is static
                 pass
             
+            # Update Move History
+            qube_tab_gui[-2] = TextBox(window, (40, 750), 16, ", ".join((move_history[:-35:-1])), DARK_GREY, True)
+            
             # Update Qube Render
-            qube_tab_gui[-1] = qube_renderers[qube_size - 1](window, qube_tab_gui[-1].pos, qube_size, is_qube_form)
+            qube_tab_gui[-1].size = qube_size
+            qube_tab_gui[-1].is_qube_form = is_qube_form
             
             try:
                 element.draw()
