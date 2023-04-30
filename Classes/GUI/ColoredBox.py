@@ -8,5 +8,5 @@ class ColoredBox:
         self.color: pygame.Color = color
     
     def draw(self) -> None:
-        pygame.draw.rect(self.window, self.color, self.rect)
+        pygame.draw.rect(self.window, self.color, self.rect, border_radius=12)
         return None

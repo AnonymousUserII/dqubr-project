@@ -44,12 +44,13 @@ def generate_shuffle(size: int, moves: int = 40, contract_doubles: bool = False)
         while f"{move}\'&{move}\'&{move}\'" in move_string:
             move_string = move_string.replace(f"{move}\'&{move}\'&{move}\'", "")
             move_string.replace("&&", "&")
+        
         if contract_doubles:
             while f"{move}&{move}" in move_string:
-                move_string = move_string.replace(f"{move}&{move}", "")
+                move_string = move_string.replace(f"{move}&{move}", f"{move}2")
                 move_string.replace("&&", "&")
             while f"{move}\'&{move}\'" in move_string:
-                move_string = move_string.replace(f"{move}\'&{move}\'", "")
+                move_string = move_string.replace(f"{move}\'&{move}\'", f"{move}2\'")
                 move_string.replace("&&", "&")
         
         while "&&" in move_string:  # Remove extra separators
@@ -112,7 +113,6 @@ class Qube1:
         """
         for move in moves:
             prime: bool = '\'' in move
-            print(move, end="")
             if 'x' in move:
                 self.x(prime)
             elif 'y' in move:

@@ -89,4 +89,15 @@ class Face3:
             (self.ur, self.u, self.ul), self.r, (self.dr, self.d, self.dl), self.l = \
                 self.left(), self.u, self.right(), self.d
         return None
-    
+
+
+class Face4:  # Currently unused
+    def __init__(self, starting_cells: tuple):
+        """
+        Starting cells format:
+        (ul, u, ur, l, c, r, dl, d, dr)
+        ul u ur
+        l  c  r
+        dl d dr
+        """
+        

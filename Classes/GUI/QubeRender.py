@@ -4,11 +4,8 @@ from Assets.colors import WHITE, BLUE, GREEN, ORANGE, RED, YELLOW
 from Classes.Utility.Qube import *
 from Classes.Utility.Shapes import *
 
-cell_length: int = 50
-prlgrm_wh: tuple[int, int] = int(cell_length * 1.5), int(cell_length * 0.5)
-cell_spacing: int = 2
-full_dim: int = cell_length + cell_spacing
-prlgrm_dim: int = prlgrm_wh[1] + cell_spacing
+cell_lengths: tuple[int, int, int] = 120, 60, 40
+cell_spacing: int = 3
 colors: dict = {1: RED, 2: BLUE, 3: WHITE, 4: GREEN, 5: YELLOW, 6: ORANGE}
 
 
@@ -19,7 +16,11 @@ class QubeRender:
         self.size: int = size
         self.is_cube_form: bool = is_cube_form
     
-    def draw(self, qube) -> None:
+    def draw(self, qube: Qube1 | Qube2 | Qube3) -> None:
+        cell_length: int = cell_lengths[self.size - 1]
+        full_dim: int = cell_length + cell_spacing
+        prlgrm_wh: tuple[int, int] = int(cell_length * 1.5), int(cell_length * 0.5)
+        prlgrm_dim: int = prlgrm_wh[1] + cell_spacing
         sides: tuple = qube.front, qube.up, qube.left, qube.right, qube.down, qube.back
         if self.is_cube_form:
             if self.size == 1:
@@ -30,7 +31,7 @@ class QubeRender:
                 top_dl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] - 2 * cell_spacing
                 draw_top_parallelogram(self.window, top_dl, cell_length, colors[sides[1].cell])
                 # Draw right
-                right_tl: tuple[int, int] = front_tl[0] + full_dim, front_tl[1] - cell_spacing
+                right_tl: tuple[int, int] = front_tl[0] + full_dim + cell_spacing, front_tl[1] - cell_spacing
                 draw_right_parallelogram(self.window, right_tl, cell_length, colors[sides[3].cell])
             elif self.size == 2:
                 front_tl: tuple[int, int] = self.pos[0] - int(0.5 * cell_spacing) - cell_length, \
@@ -108,11 +109,11 @@ class QubeRender:
                 front_tl: tuple[int, int] = self.pos[0] - int(0.5 * cell_length), self.pos[1] - int(0.5 * cell_length)
                 top_lefts: tuple = (
                     front_tl,
-                    (front_tl[0], front_tl[1] - full_dim),
-                    (front_tl[0] - full_dim, front_tl[1]),
-                    (front_tl[0] + full_dim, front_tl[1]),
-                    (front_tl[0], front_tl[1] + full_dim),
-                    (front_tl[0] + 2 * full_dim, front_tl[1])
+                    (front_tl[0], front_tl[1] - full_dim - cell_spacing),
+                    (front_tl[0] - full_dim - cell_spacing, front_tl[1]),
+                    (front_tl[0] + full_dim + cell_spacing, front_tl[1]),
+                    (front_tl[0], front_tl[1] + full_dim + cell_spacing),
+                    (front_tl[0] + 2 * (full_dim + cell_spacing), front_tl[1])
                 )
                 
                 for tl, side in zip(top_lefts, sides):

@@ -1,4 +1,5 @@
 from os import path
+from time import time
 from enum import Enum
 from contextlib import redirect_stdout
 with redirect_stdout(None):
@@ -8,6 +9,7 @@ from Assets.colors import *
 from Classes.GUI.TabButton import TabButton
 from Classes.GUI.TextBox import TextBox
 from Classes.GUI.ToggleBox import ToggleBox
+from Classes.GUI.InputBox import InputBox
 from Classes.GUI.RadioButtons import RadioButtons
 from Classes.GUI.ColoredBox import ColoredBox
 from Classes.GUI.QubeRender import *
@@ -32,6 +34,15 @@ _TITLE: str = "dQubr Project"
 _TICK_RATE: int = 120
 
 
+def process_time(time: float) -> tuple[int, int, int]:
+    minutes: int = int(time // 60)
+    time -= minutes * 60
+    seconds: int = int(time)
+    time -= seconds
+    centiseconds: int = int(time * 100)
+    return minutes, seconds, centiseconds
+
+
 def program_window():
     pygame.init()
     window: pygame.Surface = pygame.display.set_mode(_RES, pygame.DOUBLEBUF)
@@ -48,44 +59,68 @@ def program_window():
     qube_tab_btn: TabButton = TabButton(window, (50, 10), (200, 60), "Virtual Qube")
     cfop_tab_btn: TabButton = TabButton(window, (260, 10), (200, 60), "CFOP Solver")
     time_tab_btn: TabButton = TabButton(window, (470, 10), (200, 60), "Times")
-    active_tab: int = Tab.QUBE.value
+    active_tab: int = Tab.TIME.value
 
     qube = Qube3()
     qube_size: int = 3
     qube_types: tuple = Qube1, Qube2, Qube3
     is_cube_form: bool = False
     move_history: list[str] = []
+    scrambled: bool = False
+    
+    is_ready: bool = False
+    timer_running: bool = False
+    start_time: float = time()
+    current_time: float = start_time
+    left_keys: set = {pygame.K_q, pygame.K_w, pygame.K_e, pygame.K_r,
+                      pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_f,
+                      pygame.K_z, pygame.K_x, pygame.K_c, pygame.K_v}
+    right_keys: set = {pygame.K_u, pygame.K_i, pygame.K_o, pygame.K_p,
+                       pygame.K_j, pygame.K_k, pygame.K_l, pygame.K_SEMICOLON,
+                       pygame.K_m, pygame.K_COMMA, pygame.K_PERIOD, pygame.K_SLASH}
     
     # GUI elements of each tab
-    qube_tab_gui: list = [TextBox(window, (500, 500), 60, "Turning and turning", DARK_GREY),
+    qube_tab_gui: tuple = (TextBox(window, (500, 500), 60, "Turning and turning", DARK_GREY),
 
-                          TextBox(window, (1000, 100), 32, "Cube Size", DARK_GREY),
-                          RadioButtons(window, (950, 150), ("1x1x1", "2x2x2", "3x3x3", "4x4x4"), DARK_GREY, 2),
+                           TextBox(window, (1000, 100), 32, "Cube Size", DARK_GREY),
+                           RadioButtons(window, (950, 150), ("1x1x1", "2x2x2", "3x3x3"), DARK_GREY, 2),
 
-                          ColoredBox(window, (40, 80), (800, 600), LAYER1_COLOR),
-                          TextBox(window, (120, 100), 24, "Cube Style", DARK_GREY),
-                          TextBox(window, (75, 131), 18, "Net", DARK_GREY),
-                          ToggleBox(window, (100, 125), DARK_GREY, False),
-                          TextBox(window, (160, 132), 18, "Cube", DARK_GREY),
+                           ColoredBox(window, (40, 80), (800, 600), LAYER1_COLOR),
+                           TextBox(window, (120, 100), 24, "Cube Style", DARK_GREY),
+                           TextBox(window, (75, 131), 18, "Net", DARK_GREY),
+                           ToggleBox(window, (100, 125), DARK_GREY, False),
+                           TextBox(window, (160, 132), 18, "Cube", DARK_GREY),
 
-                          TextBox(window, (160, 710), 36, "Move History", DARK_GREY),
-                          TextBox(window, (160, 750), 16, "", DARK_GREY, True),
+                           TextBox(window, (37, 710), 36, "Move History", DARK_GREY, True),
+                           TextBox(window, (40, 750), 16, "", DARK_GREY, True),
 
-                          QubeRender(window, (400, 400), qube_size, is_cube_form)]
+                           QubeRender(window, (400, 400), qube_size, is_cube_form))
     cfop_tab_gui: tuple = (TextBox(window, (700, 300), 60, "Solving this and that", DARK_GREY),)
     time_tab_gui: tuple = (TextBox(window, (600, 600), 60, "Times are a\'changing", DARK_GREY),
-                           TextBox(window, (400, 400), 60, "00", DARK_GREY))
+                           TextBox(window, (50, 100), 40, "Name:", DARK_GREY, True),
+                           InputBox(window, (200, 75), (250, 50), 40, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 7),
+                           
+                           ColoredBox(window, (100, 200), (600, 160), LAYER1_COLOR),
+                           TextBox(window, (300, 275), 100, ":", DARK_GREY),
+                           TextBox(window, (500, 275), 100, ".", DARK_GREY),
+                           TextBox(window, (200, 280), 100, "00", DARK_GREY),
+                           TextBox(window, (400, 280), 100, "00", DARK_GREY),
+                           TextBox(window, (600, 280), 100, "00", DARK_GREY),)
     guis: tuple = qube_tab_gui, cfop_tab_gui, time_tab_gui
     
+    # Cooldowns
     fc, xc, yc, zc, rc, lc, uc, dc, bc, mc = False, False, False, False, False, False, False, False, False, False
     undo_cool = False
+    timer_cool = False
 
     running: bool = True
     while running:
-        for event in pygame.event.get():
+        events: list[pygame.event] = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                 running = False
                 break
+        keys_pressed: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
         
         for i, tab_button in enumerate((qube_tab_btn, cfop_tab_btn, time_tab_btn)):
             tab_button.update(active_tab == i)  # Sets button to hover color if its tab is active
@@ -95,10 +130,8 @@ def program_window():
                 
             tab_button.draw()
         
-        if 1:
-            keys_pressed: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
+        if active_tab == Tab.QUBE.value:
             primed: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
-            old_m_history: int = len(move_history)
             try:
                 if keys_pressed[pygame.K_f] and not fc:
                     qube.f(primed)
@@ -172,7 +205,7 @@ def program_window():
             except AttributeError:
                 pass
             
-            try:  # Temporary undo system
+            try:  # Undo system
                 if keys_pressed[pygame.K_BACKQUOTE] and not undo_cool:
                     prime: bool = "\'" not in move_history[-1]
                     if 'R' in move_history[-1]:
@@ -205,22 +238,71 @@ def program_window():
                     undo_cool = False
             except IndexError:  # No recorded moves
                 pass
-            
-            if old_m_history != len(move_history):  # If a move was made
-                # Set textbox to original (from scramble sequence)
-                qube_tab_gui[-3] = TextBox(window, (37, 710), 36, "Move History", DARK_GREY, True)
-            
+
             if keys_pressed[pygame.K_F8]:
-                random_move_attempts: int = 40
+                random_move_attempts: int = 20
                 qube.reset()
                 scramble = generate_shuffle(qube_size, random_move_attempts)
                 qube.apply_moves(scramble)
                 move_history = scramble
-                qube_tab_gui[-3] = TextBox(window, (37, 710), 36, "Moves to Scramble", DARK_GREY, True)
+                scrambled = True
+                qube_tab_gui[-3].update_text("Moves to Scramble")
+            
+            if fc | xc | yc | zc | rc | lc | uc | dc | bc | mc | undo_cool:  # If any move has been made
+                scrambled = False
+                # Set textbox to original text
+                qube_tab_gui[-3].update_text("Move History")
+            
+            if not len(move_history):  # If move_history is empty
+                # Hide move history textbox
+                qube_tab_gui[-3].update_text("")
             
             if keys_pressed[pygame.K_F5]:
                 qube.reset()
                 move_history.clear()
+
+            # Update Move History text
+            reverse_history: int = 1 if scrambled else -1
+            qube_tab_gui[-2].update_text(", ".join((move_history[:35 * reverse_history:reverse_history])))
+        elif active_tab == Tab.TIME.value:
+            # Update name input
+            input_box_active: bool = time_tab_gui[2].update_field(events)
+            
+            if not input_box_active:
+                left_activated, right_activated = False, False
+                for key in left_keys:
+                    if keys_pressed[key]:
+                        left_activated = True
+                        break
+                for key in right_keys:
+                    if keys_pressed[key]:
+                        right_activated = True
+                        break
+                
+                if not timer_running:
+                    if left_activated and right_activated and not timer_cool:
+                        is_ready = True
+                        current_time = start_time
+                    else:
+                        if is_ready:
+                            is_ready = False
+                            timer_running = True
+                            start_time = time()
+                            current_time = start_time
+                        elif not (left_activated and right_activated):
+                            timer_cool = False
+                else:
+                    current_time = time()
+                    if left_activated and right_activated:
+                        timer_running = False
+                        timer_cool = True
+            
+            
+            # Update timer
+            display_time: tuple = process_time(current_time - start_time)
+            time_tab_gui[-3].update_text("%02d" % display_time[0])
+            time_tab_gui[-2].update_text("%02d" % display_time[1])
+            time_tab_gui[-1].update_text("%02d" % display_time[2])
         
         pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 820)), border_radius=20)  # Tab Background
         for element in guis[active_tab]:
@@ -233,18 +315,14 @@ def program_window():
                     if active_tab == Tab.QUBE.value:
                         old_q_size: int = qube_size
                         qube_size = element.selected + 1
+                        # Update Qube Render
+                        qube_tab_gui[-1].size = qube_size
+                        qube_tab_gui[-1].is_cube_form = is_cube_form
                         if old_q_size != qube_size:
                             qube = qube_types[qube_size - 1]()
                             move_history.clear()
-            except AttributeError:  # Element is static
+            except (AttributeError, TypeError):  # Element is static or requires an argument
                 pass
-            
-            # Update Move History
-            qube_tab_gui[-2] = TextBox(window, (40, 750), 16, ", ".join((move_history[:-35:-1])), DARK_GREY, True)
-            
-            # Update Qube Render
-            qube_tab_gui[-1].size = qube_size
-            qube_tab_gui[-1].is_cube_form = is_cube_form
             
             try:
                 element.draw()
