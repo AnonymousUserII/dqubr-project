@@ -1,3 +1,47 @@
+class Face1:
+    def __init__(self, starting_cell: int):
+        self.cell: int = starting_cell
+
+
+class Face2:
+    def __init__(self, starting_cells: tuple):
+        """
+        Starting cells format:
+        (ul, ur, dl, dr)
+        ul ur
+        dl dr
+        """
+        self.ul, self.ur, self.dl, self.dr = starting_cells
+
+    def up(self) -> tuple:
+        return self.ul, self.ur
+
+    def left(self) -> tuple:
+        return self.ul, self.dl
+
+    def right(self) -> tuple:
+        return self.ur, self.dr
+
+    def down(self) -> tuple:
+        return self.dl, self.dr
+    
+    def rotated(self, counterclockwise: bool = False) -> tuple:
+        """
+        Returns face as if it had been rotated
+        """
+        return (self.right(), self.left()) if counterclockwise else (self.left()[::-1], self.right()[::-1])
+    
+    def rotate(self, counterclockwise: bool = False) -> None:
+        """
+        Rotates this face
+        """
+        if counterclockwise:
+            (self.ul, self.ur), (self.dl, self.dr) = self.right(), self.left()
+        else:
+            (self.ur, self.ul), (self.dr, self.dl) = self.left(), self.right()
+        return None
+
+
 class Face3:
     def __init__(self, starting_cells: tuple):
         """
