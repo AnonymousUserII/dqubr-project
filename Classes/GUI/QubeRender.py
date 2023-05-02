@@ -16,25 +16,39 @@ class QubeRender:
         self.size: int = size
         self.is_cube_form: bool = is_cube_form
     
-    def draw(self, qube: Qube1 | Qube2 | Qube3) -> None:
+    def draw(self, qube: Qube1 | Qube2 | Qube3, back_view: bool = False) -> None:
         cell_length: int = cell_lengths[self.size - 1]
         full_dim: int = cell_length + cell_spacing
         prlgrm_wh: tuple[int, int] = int(cell_length * 1.5), int(cell_length * 0.5)
         prlgrm_dim: int = prlgrm_wh[1] + cell_spacing
         sides: tuple = qube.front, qube.up, qube.left, qube.right, qube.down, qube.back
+        if back_view:
+            sides = qube.back, qube.down, qube.right, qube.left, qube.up, qube.front
+            self.is_cube_form = True
         if self.is_cube_form:
             if self.size == 1:
-                front_tl: tuple[int, int] = self.pos[0] - int(0.5 * cell_length), self.pos[1] - int(0.5 * cell_length)
+                front_tl: tuple[int, int] = self.pos[0] - int(0.5 * cell_length) - 100, \
+                                            self.pos[1] - int(0.5 * cell_length)
                 # Draw front
                 pygame.draw.rect(self.window, colors[sides[0].cell], pygame.Rect(front_tl, (cell_length, cell_length)))
-                # Draw top
-                top_dl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] - 2 * cell_spacing
-                draw_top_parallelogram(self.window, top_dl, cell_length, colors[sides[1].cell])
-                # Draw right
-                right_tl: tuple[int, int] = front_tl[0] + full_dim + cell_spacing, front_tl[1] - cell_spacing
-                draw_right_parallelogram(self.window, right_tl, cell_length, colors[sides[3].cell])
+                
+                if back_view:
+                    # Draw bottom
+                    bottom_tl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] + full_dim + cell_spacing
+                    draw_bottom_parallelogram(self.window, bottom_tl, cell_length, colors[sides[1].cell])
+                    # Draw left
+                    left_tr: tuple[int, int] = front_tl[0] + full_dim + cell_spacing, front_tl[1] + cell_spacing
+                    draw_left_parallelogram(self.window, left_tr, cell_length, colors[sides[3].cell])
+                else:
+                    # Draw top
+                    top_dl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] - 2 * cell_spacing
+                    draw_top_parallelogram(self.window, top_dl, cell_length, colors[sides[1].cell])
+                
+                    # Draw right
+                    right_tl: tuple[int, int] = front_tl[0] + full_dim + cell_spacing, front_tl[1] - cell_spacing
+                    draw_right_parallelogram(self.window, right_tl, cell_length, colors[sides[3].cell])
             elif self.size == 2:
-                front_tl: tuple[int, int] = self.pos[0] - int(0.5 * cell_spacing) - cell_length, \
+                front_tl: tuple[int, int] = self.pos[0] - int(0.5 * cell_spacing) - cell_length - 100, \
                                             self.pos[1] - int(0.5 * cell_spacing) - cell_length
                 # Draw front
                 for i, column in enumerate(zip(sides[0].up(), sides[0].down())):
@@ -44,25 +58,47 @@ class QubeRender:
                     pygame.draw.rect(self.window, colors[column[1]],
                                      pygame.Rect((i * full_dim + front_tl[0], front_tl[1] + full_dim),
                                                  (cell_length, cell_length)))
-                # Draw top
-                top_dl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] - 2 * cell_spacing
-                for i, column in enumerate(zip(sides[1].down(), sides[1].up())):
-                    draw_top_parallelogram(self.window,
-                                           (top_dl[0] + i * full_dim, top_dl[1]), cell_length, colors[column[0]])
-                    draw_top_parallelogram(self.window,
-                                           (top_dl[0] + i * full_dim + int(0.5 * cell_length) + cell_spacing,
-                                            top_dl[1] - prlgrm_dim), cell_length, colors[column[1]])
-                # Draw right
-                right_tl: tuple[int, int] = front_tl[0] + 2 * full_dim + cell_spacing, front_tl[1] - cell_spacing
-                for i, column in enumerate(zip(sides[3].up(), sides[3].down())):
-                    draw_right_parallelogram(self.window,
-                                             (right_tl[0] + i * prlgrm_dim, right_tl[1] - i * prlgrm_dim),
-                                             cell_length, colors[column[0]])
-                    draw_right_parallelogram(self.window,
-                                             (right_tl[0] + i * prlgrm_dim, right_tl[1] - i * prlgrm_dim + full_dim),
-                                             cell_length, colors[column[1]])
+                
+                if back_view:
+                    # Draw bottom
+                    bottom_tl: tuple[int, int] = (front_tl[0] + cell_spacing, front_tl[1] + 2 * full_dim + cell_spacing)
+                    for i, column in enumerate(zip(sides[1].down()[::-1], sides[1].up()[::-1])):
+                        draw_bottom_parallelogram(self.window,
+                                                  (bottom_tl[0] + i * full_dim, bottom_tl[1]),
+                                                  cell_length, colors[column[0]])
+                        draw_bottom_parallelogram(self.window,
+                                                  (bottom_tl[0] + i * full_dim + int(0.5 * cell_length) + cell_spacing,
+                                                   bottom_tl[1] + prlgrm_dim), cell_length, colors[column[1]])
+                    # Draw left
+                    left_tl: tuple[int, int] = front_tl[0] + 2 * full_dim + cell_spacing, front_tl[1] + cell_spacing
+                    for i, column in enumerate(zip(sides[3].up(), sides[3].down())):
+                        draw_left_parallelogram(self.window,
+                                                (left_tl[0] + i * prlgrm_dim, left_tl[1] + i * prlgrm_dim),
+                                                cell_length, colors[column[0]])
+                        draw_left_parallelogram(self.window,
+                                                (left_tl[0] + i * prlgrm_dim, left_tl[1] + i * prlgrm_dim + full_dim),
+                                                cell_length, colors[column[1]])
+                else:
+                    # Draw top
+                    top_dl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] - 2 * cell_spacing
+                    for i, column in enumerate(zip(sides[1].down(), sides[1].up())):
+                        draw_top_parallelogram(self.window,
+                                               (top_dl[0] + i * full_dim, top_dl[1]), cell_length, colors[column[0]])
+                        draw_top_parallelogram(self.window,
+                                               (top_dl[0] + i * full_dim + int(0.5 * cell_length) + cell_spacing,
+                                                top_dl[1] - prlgrm_dim), cell_length, colors[column[1]])
+                    # Draw right
+                    right_tl: tuple[int, int] = front_tl[0] + 2 * full_dim + cell_spacing, front_tl[1] - cell_spacing
+                    for i, column in enumerate(zip(sides[3].up(), sides[3].down())):
+                        draw_right_parallelogram(self.window,
+                                                 (right_tl[0] + i * prlgrm_dim, right_tl[1] - i * prlgrm_dim),
+                                                 cell_length, colors[column[0]])
+                        draw_right_parallelogram(self.window,
+                                                 (right_tl[0] + i * prlgrm_dim,
+                                                  right_tl[1] - i * prlgrm_dim + full_dim),
+                                                 cell_length, colors[column[1]])
             elif self.size == 3:
-                front_tl: tuple[int, int] = self.pos[0] - int(1.5 * cell_length) - cell_spacing, \
+                front_tl: tuple[int, int] = self.pos[0] - int(1.5 * cell_length) - cell_spacing - 100, \
                                             self.pos[1] - int(1.5 * cell_length) - cell_spacing
                 # Draw front
                 for i, column in enumerate(zip(sides[0].up(), sides[0].mid_h(), sides[0].down())):
@@ -75,35 +111,67 @@ class QubeRender:
                     pygame.draw.rect(self.window, colors[column[2]],
                                      pygame.Rect((i * full_dim + front_tl[0], front_tl[1] + 2 * full_dim),
                                                  (cell_length, cell_length)))
-                # Draw top
-                top_dl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] - 2 * cell_spacing
-                for i, column in enumerate(zip(sides[1].down(), sides[1].mid_h(), sides[1].up())):
-                    draw_top_parallelogram(self.window,
-                                           (top_dl[0] + i * full_dim, top_dl[1]),
-                                           cell_length, colors[column[0]])
-                    draw_top_parallelogram(self.window,
-                                           (top_dl[0] + i * full_dim + int(0.5 * cell_length) + cell_spacing,
-                                            top_dl[1] - prlgrm_dim),
-                                           cell_length, colors[column[1]])
-                    draw_top_parallelogram(self.window,
-                                           (top_dl[0] + i * full_dim + cell_length + 2 * cell_spacing,
-                                            top_dl[1] - 2 * prlgrm_dim),
-                                           cell_length, colors[column[2]])
-                # Draw right
-                right_tl: tuple[int, int] = front_tl[0] + 3 * full_dim + cell_spacing, front_tl[1] - cell_spacing
-                for i, column in enumerate(zip(sides[3].up(), sides[3].mid_h(), sides[3].down())):
-                    draw_right_parallelogram(self.window,
-                                             (right_tl[0] + i * prlgrm_dim,
-                                              right_tl[1] - i * prlgrm_dim),
-                                             cell_length, colors[column[0]])
-                    draw_right_parallelogram(self.window,
-                                             (right_tl[0] + i * prlgrm_dim,
-                                              right_tl[1] - i * prlgrm_dim + full_dim),
-                                             cell_length, colors[column[1]])
-                    draw_right_parallelogram(self.window,
-                                             (right_tl[0] + i * prlgrm_dim,
-                                              right_tl[1] - i * prlgrm_dim + 2 * full_dim),
-                                             cell_length, colors[column[2]])
+                
+                if back_view:
+                    # Draw bottom
+                    bottom_tl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] + 3 * full_dim + cell_spacing
+                    for i, column in enumerate(zip(sides[1].down()[::-1], sides[1].mid_h()[::-1], sides[1].up()[::-1])):
+                        draw_bottom_parallelogram(self.window,
+                                               (bottom_tl[0] + i * full_dim, bottom_tl[1]),
+                                               cell_length, colors[column[0]])
+                        draw_bottom_parallelogram(self.window,
+                                               (bottom_tl[0] + i * full_dim + int(0.5 * cell_length) + cell_spacing,
+                                                bottom_tl[1] + prlgrm_dim),
+                                               cell_length, colors[column[1]])
+                        draw_bottom_parallelogram(self.window,
+                                               (bottom_tl[0] + i * full_dim + cell_length + 2 * cell_spacing,
+                                                bottom_tl[1] + 2 * prlgrm_dim),
+                                               cell_length, colors[column[2]])
+                    # Draw left
+                    left_tl: tuple[int, int] = front_tl[0] + 3 * full_dim + cell_spacing, front_tl[1] + cell_spacing
+                    for i, column in enumerate(zip(sides[3].up(), sides[3].mid_h(), sides[3].down())):
+                        draw_left_parallelogram(self.window,
+                                                (left_tl[0] + i * prlgrm_dim,
+                                                 left_tl[1] + i * prlgrm_dim),
+                                                cell_length, colors[column[0]])
+                        draw_left_parallelogram(self.window,
+                                                (left_tl[0] + i * prlgrm_dim,
+                                                 left_tl[1] + i * prlgrm_dim + full_dim),
+                                                cell_length, colors[column[1]])
+                        draw_left_parallelogram(self.window,
+                                                (left_tl[0] + i * prlgrm_dim,
+                                                 left_tl[1] + i * prlgrm_dim + 2 * full_dim),
+                                                cell_length, colors[column[2]])
+                else:
+                    # Draw top
+                    top_dl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] - 2 * cell_spacing
+                    for i, column in enumerate(zip(sides[1].down(), sides[1].mid_h(), sides[1].up())):
+                        draw_top_parallelogram(self.window,
+                                               (top_dl[0] + i * full_dim, top_dl[1]),
+                                               cell_length, colors[column[0]])
+                        draw_top_parallelogram(self.window,
+                                               (top_dl[0] + i * full_dim + int(0.5 * cell_length) + cell_spacing,
+                                                top_dl[1] - prlgrm_dim),
+                                               cell_length, colors[column[1]])
+                        draw_top_parallelogram(self.window,
+                                               (top_dl[0] + i * full_dim + cell_length + 2 * cell_spacing,
+                                                top_dl[1] - 2 * prlgrm_dim),
+                                               cell_length, colors[column[2]])
+                    # Draw right
+                    right_tl: tuple[int, int] = front_tl[0] + 3 * full_dim + cell_spacing, front_tl[1] - cell_spacing
+                    for i, column in enumerate(zip(sides[3].up(), sides[3].mid_h(), sides[3].down())):
+                        draw_right_parallelogram(self.window,
+                                                 (right_tl[0] + i * prlgrm_dim,
+                                                  right_tl[1] - i * prlgrm_dim),
+                                                 cell_length, colors[column[0]])
+                        draw_right_parallelogram(self.window,
+                                                 (right_tl[0] + i * prlgrm_dim,
+                                                  right_tl[1] - i * prlgrm_dim + full_dim),
+                                                 cell_length, colors[column[1]])
+                        draw_right_parallelogram(self.window,
+                                                 (right_tl[0] + i * prlgrm_dim,
+                                                  right_tl[1] - i * prlgrm_dim + 2 * full_dim),
+                                                 cell_length, colors[column[2]])
         else:  # Render net form
             if self.size == 1:
                 front_tl: tuple[int, int] = self.pos[0] - int(0.5 * cell_length), self.pos[1] - int(0.5 * cell_length)

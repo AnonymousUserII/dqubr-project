@@ -3,10 +3,12 @@ import pygame
 # GUI
 DARK_GREY: pygame.Color = pygame.Color(0x10, 0x10, 0x10)
 BG_COLOR: pygame.Color = pygame.Color(0x77, 0xC0, 0xF7)
-REST_BTN_COLOR: pygame.Color = pygame.Color(0x8A, 0xD2, 0xFB)
+REST_TAB_COLOR: pygame.Color = pygame.Color(0x8A, 0xD2, 0xFB)
 FRAME_COLOR: pygame.Color = pygame.Color(0xAE, 0xDF, 0xFC)
 LAYER1_COLOR: pygame.Color = pygame.Color(0xBE, 0XEF, 0xFF)
 LAYER2_COLOR: pygame.Color = pygame.Color(0xDE, 0XFF, 0xFF)
+REST_BTN_COLOR: pygame.Color = pygame.Color(0xA0, 0xA0, 0xA0)
+HOVER_BTN_COLOR: pygame.Color = pygame.Color(0xC0, 0xC0, 0xC0)
 
 # Cell Colors
 WHITE: pygame.Color = pygame.Color(0xFF, 0xFF, 0xFF)

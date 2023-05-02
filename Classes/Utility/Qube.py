@@ -8,10 +8,7 @@ def generate_shuffle(size: int, moves: int = 40, contract_doubles: bool = False)
     if size == 1:
         possible_moves = ['x', 'y', 'z']
     elif size == 3:
-        possible_moves.append('M')
-    elif size == 4:
-        possible_moves += ['r', 'l', 'u', 'd', 'f', 'b']
-        possible_moves += []
+        possible_moves += ['M', 'E', 'S']
     random_moveset: list[str] = []
     for _ in range(moves):
         random_moveset.append(choice(possible_moves))
@@ -19,43 +16,43 @@ def generate_shuffle(size: int, moves: int = 40, contract_doubles: bool = False)
             random_moveset[-1] += "\'"  # 50/50 for move to be primed
     
     # Check for redundant moves
-    move_string: str = '&'.join(random_moveset)
+    move_string: str = ';'.join(random_moveset)
     for move in possible_moves:
         # Remove four-in-a-row
-        while f"{move}&{move}&{move}&{move}" in move_string:
-            move_string = move_string.replace(f"{move}&{move}&{move}&{move}", "")
-            move_string.replace("&&", "&")
-        while f"{move}\'&{move}\'&{move}\'&{move}\'" in move_string:
-            move_string = move_string.replace(f"{move}\'&{move}\'&{move}\'&{move}\'", "")
-            move_string.replace("&&", "&")
+        while f"{move};{move};{move};{move}" in move_string:
+            move_string = move_string.replace(f"{move};{move};{move};{move}", "")
+            move_string.replace(";;", ";")
+        while f"{move}\';{move}\';{move}\';{move}\'" in move_string:
+            move_string = move_string.replace(f"{move}\';{move}\';{move}\';{move}\'", "")
+            move_string.replace(";;", ";")
         
         # Remove consecutive reversals, e.g. D&D'
-        while f"{move}&{move}\'" in move_string:
-            move_string = move_string.replace(f"{move}&{move}\'", "")
-            move_string.replace("&&", "&")
-        while f"{move}\'&{move}" in move_string:
-            move_string = move_string.replace(f"{move}\'&{move}", "")
-            move_string.replace("&&", "&")
+        while f"{move};{move}\'" in move_string:
+            move_string = move_string.replace(f"{move};{move}\'", "")
+            move_string.replace(";;", ";")
+        while f"{move}\';{move}" in move_string:
+            move_string = move_string.replace(f"{move}\';{move}", "")
+            move_string.replace(";", ";")
         
         # Contract triples then doubles
-        while f"{move}&{move}&{move}" in move_string:
-            move_string = move_string.replace(f"{move}&{move}&{move}", "")
-            move_string.replace("&&", "&")
-        while f"{move}\'&{move}\'&{move}\'" in move_string:
-            move_string = move_string.replace(f"{move}\'&{move}\'&{move}\'", "")
-            move_string.replace("&&", "&")
+        while f"{move};{move};{move}" in move_string:
+            move_string = move_string.replace(f"{move};{move};{move}", "")
+            move_string.replace(";;", ";")
+        while f"{move}\';{move}\';{move}\'" in move_string:
+            move_string = move_string.replace(f"{move}\';{move}\';{move}\'", "")
+            move_string.replace(";;", ";")
         
         if contract_doubles:
-            while f"{move}&{move}" in move_string:
-                move_string = move_string.replace(f"{move}&{move}", f"{move}2")
-                move_string.replace("&&", "&")
-            while f"{move}\'&{move}\'" in move_string:
-                move_string = move_string.replace(f"{move}\'&{move}\'", f"{move}2\'")
-                move_string.replace("&&", "&")
+            while f"{move};{move}" in move_string:
+                move_string = move_string.replace(f"{move};{move}", f"{move}2")
+                move_string.replace(";;", ";")
+            while f"{move}\';{move}\'" in move_string:
+                move_string = move_string.replace(f"{move}\';{move}\'", f"{move}2\'")
+                move_string.replace(";;", ";")
         
-        while "&&" in move_string:  # Remove extra separators
-            move_string = move_string.replace("&&", "&")
-    generated_moves = move_string.split('&')
+        while ";;" in move_string:  # Remove extra separators
+            move_string = move_string.replace(";;", ";")
+    generated_moves = move_string.split(';')
     # Remove empty moves
     while "" in generated_moves:
         generated_moves.remove("")
@@ -286,6 +283,12 @@ class Qube2:
                 self.u(prime)
             elif 'D' in move:
                 self.d(prime)
+            elif 'x' in move:
+                self.x(prime)
+            elif 'y' in move:
+                self.y(prime)
+            elif 'z' in move:
+                self.z(prime)
         return None
 
 
@@ -485,4 +488,10 @@ class Qube3:
                 self.e(prime)
             elif 'S' in move:
                 self.s(prime)
+            elif 'x' in move:
+                self.x(prime)
+            elif 'y' in move:
+                self.y(prime)
+            elif 'z' in move:
+                self.z(prime)
         return None

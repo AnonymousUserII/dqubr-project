@@ -1,7 +1,7 @@
 from os.path import join
 import pygame
 
-from Assets.colors import DARK_GREY, FRAME_COLOR, REST_BTN_COLOR
+from Assets.colors import DARK_GREY, FRAME_COLOR, REST_TAB_COLOR
 from Classes.GUI.Button import Button
 
 
@@ -9,7 +9,7 @@ class TabButton(Button):
     def __init__(self, window: pygame.Surface, pos: tuple[int, int], size: tuple[int, int], text: str):
         super().__init__(window, pos, size)
         self.bg_color, self.hover_color, self.color, self.text_color = \
-            REST_BTN_COLOR, FRAME_COLOR, REST_BTN_COLOR, DARK_GREY
+            REST_TAB_COLOR, FRAME_COLOR, REST_TAB_COLOR, DARK_GREY
         
         self.label: pygame.Surface = pygame.font.Font(join("Assets", "od.otf"), 20).render(text, True, DARK_GREY)
         self.label_rect: pygame.Rect = self.label.get_rect(center=self.rect.center)
