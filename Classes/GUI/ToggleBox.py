@@ -6,9 +6,10 @@ element_size: tuple[int, int] = 30, 15
 
 
 class ToggleBox(Button):
-    def __init__(self, window: pygame.Surface, pos: tuple[int, int], color: pygame.Color, init: bool = False):
+    def __init__(self, window: pygame.Surface, pos: tuple[int, int], color: pygame.Color, id: int, init: bool = False):
         super().__init__(window, pos, element_size)
         self.color: pygame.Color = color
+        self.id: int = id
         self.state: bool = init  # False is left
     
     def update(self) -> None:

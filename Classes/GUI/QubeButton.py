@@ -11,11 +11,12 @@ class QubeButton(TextButton):
         self.rect.center = self.label_rect.center = net_pos  # Button position centered at given coordinate
         self.text: str = text
         self.min_cube_size: int = min_cube_size  # At what cube size will the button be visible
-        self.hidden: bool = False
     
     def update_state(self, cube_size: bool, cube_form: bool) -> str | None:
-        super().update()
         self.hidden = cube_size < self.min_cube_size
+        if self.hidden:
+            return None
+        super().update()
         self.rect.center = self.label_rect.center = self.cube_pos if cube_form else self.net_pos
         return self.text if self.clicked else None
     

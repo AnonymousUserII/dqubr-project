@@ -8,6 +8,7 @@ with redirect_stdout(None):
 from Assets.colors import *
 from Classes.GUI.TabButton import TabButton
 from Classes.GUI.TextBox import TextBox
+from Classes.GUI.TextButton import TextButton
 from Classes.GUI.ToggleBox import ToggleBox
 from Classes.GUI.InputBox import InputBox
 from Classes.GUI.RadioButtons import RadioButtons
@@ -34,7 +35,25 @@ class SFXChannel(Enum):
 # Window Properties
 _RES: tuple[int, int] = (1200, 900)
 _TITLE: str = "dQubr Project"
-_TICK_RATE: int = 120
+_TICK_RATE: int = 60
+
+# Program constants
+HISTORY_OVERFLOW: int = 34
+
+
+# Dictionary to hold arrow graphics for qube turning
+moves: list[str] = ["cubearrow"]
+for form in ("net", "cube"):
+    for rotation in ('f', 'b', 'r', 'l', 'u', 'd', 'm', 'e', 's', 'x', 'y', 'z'):
+        moves.append("{}_{}".format(form, rotation))
+        moves.append("{}_{}p".format(form, rotation))
+qube_arrows: dict[str, pygame.Surface] = {}
+for move in moves:
+    try:
+        qube_arrows[move] = pygame.image.load(path.join("Assets", "QubeArrows", f"{move}.png"))
+    except FileNotFoundError:
+        print("Missing:", move)
+        pass
 
 
 def process_time(time: float) -> tuple[int, int, int]:
@@ -69,6 +88,7 @@ def program_window():
     qube_size: int = 3
     qube_types: tuple = Qube1, Qube2, Qube3
     is_cube_form: bool = False
+    hide_rotation_tips: bool = False
     move_history: list[str] = []
     scrambled: bool = False
     
@@ -95,8 +115,12 @@ def program_window():
                            ColoredBox(window, (40, 80), (800, 600), LAYER1_COLOR),
                            TextBox(window, (120, 100), 24, "Cube Style", DARK_GREY),
                            TextBox(window, (75, 131), 18, "Net", DARK_GREY),
-                           ToggleBox(window, (100, 125), DARK_GREY, False),
+                           ToggleBox(window, (100, 125), DARK_GREY, 0, False),
                            TextBox(window, (160, 132), 18, "Cube", DARK_GREY),
+                           TextBox(window, (700, 100), 24, "Show Rotation Tips", DARK_GREY),
+                           TextBox(window, (730, 131), 18, "Yes", DARK_GREY),
+                           ToggleBox(window, (755, 125), DARK_GREY, 1, False),
+                           TextBox(window, (805, 132), 18, "No", DARK_GREY),
                            
                            QubeButton(window, (358, 180), (330, 200), "L\'", 2),
                            QubeButton(window, (400, 180), (372, 200), "M\'", 3),
@@ -112,9 +136,9 @@ def program_window():
                            QubeButton(window, (750, 400), (520, 330), "E", 3),
                            QubeButton(window, (750, 442), (520, 372), "D", 2),
                            
-                           QubeButton(window, (535, 226), (380, 490), "B\'", 2),
+                           QubeButton(window, (535, 226), (440, 430), "B\'", 2),
                            QubeButton(window, (515, 268), (410, 460), "S", 3),
-                           QubeButton(window, (495, 310), (440, 430), "F", 2),
+                           QubeButton(window, (495, 310), (380, 490), "F", 2),
                            QubeButton(window, (310, 310), (210, 320), "F\'", 2),
                            QubeButton(window, (290, 268), (240, 290), "S\'", 3),
                            QubeButton(window, (270, 226), (270, 260), "B", 2),
@@ -126,7 +150,10 @@ def program_window():
                            QubeButton(window, (142, 222), None, "y\'", 1),
                            QubeButton(window, (184, 222), None, "z\'", 1),
                            
-                           ImageBox(window, (200, 200), (530, 400)),
+                           TextButton(window, (160, 630), (80, 40), "Solve", 18),
+                           TextButton(window, (250, 630), (70, 40), "Undo", 18),
+                           TextButton(window, (50, 630), (100, 40), "Scramble", 18),
+                           
                            TextBox(window, (690, 230), 28, "", DARK_GREY),
                            QubeRender(window, (750, 330), qube_size, is_cube_form),
                            
@@ -134,7 +161,8 @@ def program_window():
                            TextBox(window, (37, 710), 36, "Move History", DARK_GREY, True),
                            TextBox(window, (40, 750), 16, "", DARK_GREY, True),
 
-                           QubeRender(window, (400, 400), qube_size, is_cube_form))
+                           QubeRender(window, (400, 400), qube_size, is_cube_form),
+                           ImageBox(window, (200, 200), (530, 400)))
     cfop_tab_gui: tuple = (TextBox(window, (700, 300), 60, "Solving this and that", DARK_GREY),)
     time_tab_gui: tuple = (TextBox(window, (400, 750), 60, "Times are a\'changing", DARK_GREY),
                            TextBox(window, (50, 100), 40, "Name:", DARK_GREY, True),
@@ -165,6 +193,10 @@ def program_window():
                 running = False
                 break
         keys_pressed: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
+        try:
+            qube_arrows["cubearrow"] = pygame.image.load(path.join("Assets", "QubeArrows", f"cubearrow.png"))
+        except pygame.error:
+            pass
         
         for i, tab_button in enumerate((qube_tab_btn, cfop_tab_btn, time_tab_btn)):
             tab_button.update(active_tab == i)  # Sets button to hover color if its tab is active
@@ -264,7 +296,7 @@ def program_window():
                 pass
             
             try:  # Undo system
-                if keys_pressed[pygame.K_BACKQUOTE] and not undo_cool:
+                if keys_pressed[pygame.K_BACKQUOTE] and not undo_cool or qube_tab_gui[-9].clicked:
                     prime: bool = "\'" not in move_history[-1]
                     if 'R' in move_history[-1]:
                         qube.r(prime)
@@ -296,37 +328,44 @@ def program_window():
                     undo_cool = False
             except IndexError:  # No recorded moves
                 pass
-
-            if keys_pressed[pygame.K_F8]:
+            
+            # Scramble system
+            if keys_pressed[pygame.K_F8] or qube_tab_gui[-8].clicked:
                 random_move_attempts: int = 20
                 qube.reset()
                 scramble = generate_shuffle(qube_size, random_move_attempts)
                 qube.apply_moves(scramble)
                 move_history = scramble
                 scrambled = True
-                qube_tab_gui[-3].update_text("Moves to Scramble")
+                qube_tab_gui[-4].update_text("Moves to Scramble")
             
             if fc | xc | yc | zc | rc | lc | uc | dc | bc | mc | undo_cool:  # If any move has been made
                 scrambled = False
                 # Set textbox to original text
-                qube_tab_gui[-3].update_text("Move History")
+                qube_tab_gui[-4].update_text("Move History")
             
-            if not len(move_history):  # If move_history is empty
-                # Hide move history textbox
-                qube_tab_gui[-3].update_text("")
+            history_length: int = len(move_history)
+            if not history_length:  # If move_history is empty
+                qube_tab_gui[-4].update_text("")  # Hide move history textbox
+                qube_tab_gui[-9].set_hidden(True)  # Hide undo button
             else:
-                qube_tab_gui[-3].update_text("Moves to Scramble" if scrambled else "Move History")
-                qube_tab_gui[-4].update_text("Start with WHITE front, RED top" if scrambled else "")
+                length_text: str = f" ({history_length})" if history_length > HISTORY_OVERFLOW else ""
+                qube_tab_gui[-4].update_text("Moves to Scramble" if scrambled else "Move History" + length_text)
+                qube_tab_gui[-5].update_text("Start with WHITE front, RED top" if scrambled else "")
+                qube_tab_gui[-9].set_hidden(False)  # Show undo button
             
-            if keys_pressed[pygame.K_F5]:
+            # Return qube to solved state
+            if keys_pressed[pygame.K_F5] or qube_tab_gui[-10].clicked:
                 qube.reset()
                 move_history.clear()
             
-            qube_tab_gui[-6].update_text("Back View" if is_cube_form else "")
+            # Show back view label only if cube form shown
+            qube_tab_gui[-7].update_text("Back View" if is_cube_form else "")
             
             # Update Move History text
             reverse_history: int = 1 if scrambled else -1
-            qube_tab_gui[-2].update_text(", ".join((move_history[:35 * reverse_history:reverse_history])))
+            qube_tab_gui[-3].update_text(", ".join((move_history[:HISTORY_OVERFLOW * reverse_history:reverse_history]))
+                                         + (", ..." if len(move_history) > HISTORY_OVERFLOW else ""))
         elif active_tab == Tab.TIME.value:
             # Update name input
             input_box_active: bool = time_tab_gui[2].update_field(events)
@@ -366,40 +405,61 @@ def program_window():
             time_tab_gui[-2].update_text("%02d" % display_time[1])
             time_tab_gui[-1].update_text("%02d" % display_time[2])
         
+        hovered_btn: str = ""
         pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 820)), border_radius=20)  # Tab Background
         for element in guis[active_tab]:  # Draw rest of GUI elements for the tab
+            # Update GUI Elements
             try:
                 if type(element) == QubeButton:
                     if active_tab == Tab.QUBE.value:
                         move: str | None = element.update_state(qube_size, is_cube_form)
+                        if element.hidden:
+                            continue
+                        
+                        if element.hover and not pygame.mouse.get_pressed()[0]:
+                            hovered_btn = element.text
                         if move is not None:
                             qube.apply_moves((move,))
                             move_history.append(move)
-                else:
-                    element.update()
-                    if type(element) == ToggleBox:
-                        if active_tab == Tab.QUBE.value:
+                            scrambled = False
+                
+                element.update()
+                if type(element) == ToggleBox:
+                    if active_tab == Tab.QUBE.value:
+                        if element.id == 0:
                             is_cube_form = element.state
-                    if type(element) == RadioButtons:
-                        if active_tab == Tab.QUBE.value:
-                            old_q_size: int = qube_size
-                            qube_size = element.selected + 1
-                            # Update Qube Render
-                            qube_tab_gui[-1].size = qube_size
-                            qube_tab_gui[-5].size = qube_size
-                            qube_tab_gui[-1].is_cube_form = is_cube_form
-                            if old_q_size != qube_size:
-                                qube = qube_types[qube_size - 1]()
-                                move_history.clear()
+                        elif element.id == 1:
+                            hide_rotation_tips = element.state
+                elif type(element) == RadioButtons:
+                    if active_tab == Tab.QUBE.value:
+                        old_q_size: int = qube_size
+                        qube_size = element.selected + 1
+                        # Update Qube Render
+                        qube_tab_gui[-2].size = qube_size
+                        qube_tab_gui[-6].size = qube_size
+                        qube_tab_gui[-2].is_cube_form = is_cube_form
+                        if old_q_size != qube_size:
+                            qube = qube_types[qube_size - 1]()
+                            move_history.clear()
             except (AttributeError, TypeError):  # Element is static or requires an argument
+                if type(element) == ImageBox:
+                    if active_tab == Tab.QUBE.value and not hide_rotation_tips:  # Show corresponding arrows
+                        form: str = "cube" if is_cube_form else "net"
+                        rotation: str = hovered_btn.replace("\'", 'p').lower()
+                        image_name: str = f"{form}_{rotation}"
+                        element.update_state(qube_arrows[image_name] if hovered_btn else None)
+                        # element.update_state(qube_arrows[image_name] if hovered_btn else qube_arrows["cubearrow"])
                 pass
+            # except Exception:
+            #     pass
             
+            # Draw GUI Elements
             try:
                 element.draw()
             except TypeError:  # Is QubeRenderer
-                qube_tab_gui[-1].draw(qube)
+                qube_tab_gui[-2].draw(qube)
                 if is_cube_form:
-                    qube_tab_gui[-5].draw(qube, back_view=True)
+                    qube_tab_gui[-6].draw(qube, back_view=True)
         
         pygame.display.update()
         clock.tick(_TICK_RATE)
