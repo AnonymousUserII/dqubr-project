@@ -4,17 +4,20 @@ import pygame
 
 from Classes.GUI.Button import Button
 
+ascii_set: str = "1234567890abcdefghijklmnopqrstuvwxyz=-+_!@#$%^&*()"
+
 
 class InputBox(Button):
     def __init__(self, window: pygame.Surface, pos: tuple[int, int], size: tuple[int, int], text_height: int,
                  bg_color: pygame.Color | None, active_color: pygame.Color | None,
-                 text_color: pygame.Color, max_length: int):
+                 text_color: pygame.Color, max_length: int, accepted_keys: str = ascii_set):
         super().__init__(window, pos, size)
         self.text_height, self.bg_color, self.active_color, self.text_color, self.max_length = \
             text_height, bg_color, active_color, text_color, max_length
         self.color: pygame.Color = bg_color
         self.text: str = ""
-        self.font: pygame.font = pygame.font.Font(join("Assets", "od.otf"), text_height)
+        self.font: pygame.font = pygame.font.Font(join("Assets", "fcm.ttf"), text_height)
+        self.accepted: str = accepted_keys
         self.enabled: bool = False
     
     def update_field(self, events: list[pygame.event]) -> bool:
@@ -32,7 +35,7 @@ class InputBox(Button):
                     elif event.key == pygame.K_BACKSPACE:
                         if len(self.text) > 0:
                             self.text = self.text[:-1]
-                    elif event.unicode.lower() in "1234567890abcdefghijklmnopqrstuvwxyz=-+_!@#$%^&*()":
+                    elif event.unicode.lower() in self.accepted:
                         if len(self.text) < self.max_length:
                             self.text += event.unicode.upper()
                 except AttributeError:  # If there is no ASCII for the "input" key

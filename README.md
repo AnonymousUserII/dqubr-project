@@ -5,7 +5,7 @@ Some random application for cubers. Made in Python because.
 - PyGame
 
 ## Current Features
-- Interactive virtual cube
+- Interactive virtual cube + indicators
 
 ## Controls
 Cube turning is processed in SiGN notation.

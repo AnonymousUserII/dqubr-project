@@ -22,8 +22,7 @@ from Classes.Utility.Qube import *
 
 class Tab(Enum):
     QUBE = 0
-    CFOP = 1
-    TIME = 2
+    TIME = 1
 
 
 class SFXChannel(Enum):
@@ -57,6 +56,10 @@ for move in moves:
 
 
 def process_time(time: float) -> tuple[int, int, int]:
+    """
+    Takes time in seconds
+    Returns time in minutes:seconds:centiseconds
+    """
     time = min(time, 99 * 60 + 99.99)  # Set a maximum possible time of 99:99:99
     minutes: int = int(time // 60)
     time -= minutes * 60
@@ -80,8 +83,7 @@ def program_window():
     
     # Tab buttons
     qube_tab_btn: TabButton = TabButton(window, (50, 10), (200, 60), "Virtual Qube")
-    cfop_tab_btn: TabButton = TabButton(window, (260, 10), (200, 60), "CFOP Solver")
-    time_tab_btn: TabButton = TabButton(window, (470, 10), (200, 60), "Times")
+    time_tab_btn: TabButton = TabButton(window, (260, 10), (200, 60), "Times")
     active_tab: int = Tab.QUBE.value
 
     qube = Qube3()
@@ -103,6 +105,8 @@ def program_window():
                        pygame.K_j, pygame.K_k, pygame.K_l, pygame.K_SEMICOLON,
                        pygame.K_m, pygame.K_COMMA, pygame.K_PERIOD, pygame.K_SLASH}
     dummy_times: tuple = (("PLR", "00:58.21"), ("PLR", "00:30.00"), ("PLR", "00:47.60"), ("PLR", "01:08.75"))
+    
+    numbers: str = "0123456789"
     
     # GUI elements of each tab
     qube_tab_gui: tuple = (TextBox(window, (900, 800), 40, "Turning and turning...", DARK_GREY),
@@ -150,7 +154,7 @@ def program_window():
                            QubeButton(window, (142, 222), None, "y\'", 1),
                            QubeButton(window, (184, 222), None, "z\'", 1),
                            
-                           TextButton(window, (160, 630), (80, 40), "Solve", 18),
+                           TextButton(window, (160, 630), (80, 40), "Reset", 18),
                            TextButton(window, (250, 630), (70, 40), "Undo", 18),
                            TextButton(window, (50, 630), (100, 40), "Scramble", 18),
                            
@@ -163,27 +167,37 @@ def program_window():
 
                            QubeRender(window, (400, 400), qube_size, is_cube_form),
                            ImageBox(window, (200, 200), (530, 400)))
-    cfop_tab_gui: tuple = (TextBox(window, (700, 300), 60, "Solving this and that", DARK_GREY),)
     time_tab_gui: tuple = (TextBox(window, (400, 750), 60, "Times are a\'changing", DARK_GREY),
                            TextBox(window, (50, 100), 40, "Name:", DARK_GREY, True),
-                           InputBox(window, (200, 75), (250, 50), 40, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 7),
+                           InputBox(window, (200, 75), (200, 50), 40, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 7),
                            
                            ColoredBox(window, (800, 75), (365, 600), LAYER1_COLOR),
                            TextBox(window, (990, 110), 36, "Leaderboard", DARK_GREY),
                            Leaderboard(window, (820, 150), 16, DARK_GREY, dummy_times),
+                           
+                           TextBox(window, (900, 800), 32, "Add a time", DARK_GREY),
+                           InputBox(window, (810, 820), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
+                           InputBox(window, (880, 820), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
+                           InputBox(window, (950, 820), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
+                           TextBox(window, (835, 870), 12, "MIN", DARK_GREY),
+                           TextBox(window, (905, 870), 12, "SEC", DARK_GREY),
+                           TextBox(window, (975, 870), 12, "CS", DARK_GREY),
+                           TextBox(window, (870, 838), 18, ":", DARK_GREY),
+                           TextBox(window, (940, 838), 18, ".", DARK_GREY),
                            
                            ColoredBox(window, (100, 200), (600, 160), LAYER1_COLOR),
                            TextBox(window, (300, 275), 100, ":", DARK_GREY),
                            TextBox(window, (500, 275), 100, ".", DARK_GREY),
                            TextBox(window, (200, 280), 100, "00", DARK_GREY),
                            TextBox(window, (400, 280), 100, "00", DARK_GREY),
-                           TextBox(window, (600, 280), 100, "00", DARK_GREY),)
-    guis: tuple = qube_tab_gui, cfop_tab_gui, time_tab_gui
+                           TextBox(window, (600, 280), 100, "00", DARK_GREY))
+    guis: tuple = qube_tab_gui, time_tab_gui
     
     # Cooldowns
     fc, xc, yc, zc, rc, lc, uc, dc, bc, mc, ec, sc = tuple(False for _ in range(12))
     undo_cool = False
     timer_cool = False
+    tab_cool = False
 
     running: bool = True
     while running:
@@ -198,7 +212,7 @@ def program_window():
         except pygame.error:
             pass
         
-        for i, tab_button in enumerate((qube_tab_btn, cfop_tab_btn, time_tab_btn)):
+        for i, tab_button in enumerate((qube_tab_btn, time_tab_btn)):
             tab_button.update(active_tab == i)  # Sets button to hover color if its tab is active
             if tab_button.clicked and not active_tab == i:  # Prevent sound from playing if tab already selected
                 active_tab = i
@@ -347,12 +361,15 @@ def program_window():
             history_length: int = len(move_history)
             if not history_length:  # If move_history is empty
                 qube_tab_gui[-4].update_text("")  # Hide move history textbox
+                qube_tab_gui[-5].update_text("")
                 qube_tab_gui[-9].set_hidden(True)  # Hide undo button
+                qube_tab_gui[-10].set_hidden(True)  # Hide solve button
             else:
                 length_text: str = f" ({history_length})" if history_length > HISTORY_OVERFLOW else ""
                 qube_tab_gui[-4].update_text("Moves to Scramble" if scrambled else "Move History" + length_text)
                 qube_tab_gui[-5].update_text("Start with WHITE front, RED top" if scrambled else "")
                 qube_tab_gui[-9].set_hidden(False)  # Show undo button
+                qube_tab_gui[-10].set_hidden(False)  # Show solve button
             
             # Return qube to solved state
             if keys_pressed[pygame.K_F5] or qube_tab_gui[-10].clicked:
@@ -367,9 +384,25 @@ def program_window():
             qube_tab_gui[-3].update_text(", ".join((move_history[:HISTORY_OVERFLOW * reverse_history:reverse_history]))
                                          + (", ..." if len(move_history) > HISTORY_OVERFLOW else ""))
         elif active_tab == Tab.TIME.value:
-            # Update name input
-            input_box_active: bool = time_tab_gui[2].update_field(events)
+            if keys_pressed[pygame.K_TAB] and not tab_cool:  # Tab switching
+                for i in range(3):  # 0, 1, 2
+                    if time_tab_gui[7 + i].enabled:
+                        time_tab_gui[7 + i].enabled = False
+                        time_tab_gui[(i + 1) % 3 + 7].enabled = True
+                        break
+                tab_cool = True
+            elif not keys_pressed[pygame.K_TAB]:
+                tab_cool = False
             
+            # To skip keyboard hits when an inbox box is active
+            input_box_active: bool = time_tab_gui[2].update_field(events) | \
+                                     time_tab_gui[7].update_field(events) | \
+                                     time_tab_gui[8].update_field(events) | \
+                                     time_tab_gui[9].update_field(events)
+            if time_tab_gui[8].text:
+                if int(time_tab_gui[8].text) >= 60:  # If inputted seconds is greater than 60
+                    time_tab_gui[8].text = "59"
+                    
             if not input_box_active:
                 left_activated, right_activated = False, False
                 for key in left_keys:
@@ -448,10 +481,7 @@ def program_window():
                         rotation: str = hovered_btn.replace("\'", 'p').lower()
                         image_name: str = f"{form}_{rotation}"
                         element.update_state(qube_arrows[image_name] if hovered_btn else None)
-                        # element.update_state(qube_arrows[image_name] if hovered_btn else qube_arrows["cubearrow"])
                 pass
-            # except Exception:
-            #     pass
             
             # Draw GUI Elements
             try:
