@@ -32,12 +32,12 @@ class SFXChannel(Enum):
 
 
 # Window Properties
-_RES: tuple[int, int] = (1200, 900)
+_RES: tuple[int, int] = (1200, 660)
 _TITLE: str = "dQubr Project"
 _TICK_RATE: int = 60
 
 # Program constants
-HISTORY_OVERFLOW: int = 34
+HISTORY_OVERFLOW: int = 24
 
 
 # Dictionary to hold arrow graphics for qube turning
@@ -109,81 +109,80 @@ def program_window():
     numbers: str = "0123456789"
     
     # GUI elements of each tab
-    qube_tab_gui: tuple = (TextBox(window, (900, 800), 40, "Turning and turning...", DARK_GREY),
-                           TextBox(window, (960, 850), 40, "here and there...", DARK_GREY),
+    qube_tab_gui: tuple = (
+                           # Settings
+                           TextBox(window, (850, 200), 24, "Cube Size", DARK_GREY, True),
+                           RadioButtons(window, (870, 240), ("1x1x1", "2x2x2", "3x3x3"), DARK_GREY, 2),
+                           TextBox(window, (850, 360), 24, "Cube Style", DARK_GREY, True),
+                           TextBox(window, (865, 397), 18, "Net", DARK_GREY, True),
+                           ToggleBox(window, (905, 391), DARK_GREY, 0, False),
+                           TextBox(window, (965, 398), 18, "Cube", DARK_GREY),
+                           TextBox(window, (850, 100), 24, "Show Rotation Tips", DARK_GREY, True),
+                           TextBox(window, (880, 131), 18, "Yes", DARK_GREY),
+                           ToggleBox(window, (905, 125), DARK_GREY, 1, False),
+                           TextBox(window, (955, 132), 18, "No", DARK_GREY),
+                           
+                           # Cube Rendering Division
+                           ColoredBox(window, (40, 80), (780, 540), LAYER1_COLOR),
+                           QubeButton(window, (328, 150), (300, 170), "L\'", 2),
+                           QubeButton(window, (370, 150), (342, 170), "M\'", 3),
+                           QubeButton(window, (412, 150), (384, 170), "R", 2),
+                           QubeButton(window, (328, 590), (228, 520), "L", 2),
+                           QubeButton(window, (370, 590), (270, 520), "M", 3),
+                           QubeButton(window, (412, 590), (312, 520), "R\'", 2),
+                           
+                           QubeButton(window, (150, 328), (120, 328), "U", 2),
+                           QubeButton(window, (150, 370), (120, 370), "E\'", 3),
+                           QubeButton(window, (150, 412), (120, 412), "D\'", 2),
+                           QubeButton(window, (720, 328), (490, 258), "U\'", 2),
+                           QubeButton(window, (720, 370), (490, 300), "E", 3),
+                           QubeButton(window, (720, 412), (490, 342), "D", 2),
+                           
+                           QubeButton(window, (505, 196), (410, 400), "B\'", 2),
+                           QubeButton(window, (485, 238), (380, 430), "S", 3),
+                           QubeButton(window, (465, 280), (350, 460), "F", 2),
+                           QubeButton(window, (280, 280), (180, 290), "F\'", 2),
+                           QubeButton(window, (260, 238), (210, 260), "S\'", 3),
+                           QubeButton(window, (240, 196), (240, 230), "B", 2),
 
-                           TextBox(window, (1000, 100), 32, "Cube Size", DARK_GREY),
-                           RadioButtons(window, (950, 150), ("1x1x1", "2x2x2", "3x3x3"), DARK_GREY, 2),
+                           QubeButton(window, (90, 130), None, "x", 1),
+                           QubeButton(window, (132, 130), None, "y", 1),
+                           QubeButton(window, (174, 130), None, "z", 1),
+                           QubeButton(window, (90, 172), None, "x\'", 1),
+                           QubeButton(window, (132, 172), None, "y\'", 1),
+                           QubeButton(window, (174, 172), None, "z\'", 1),
                            
+                           TextButton(window, (610, 100), (80, 40), "Reset", 18),
+                           TextButton(window, (700, 100), (100, 40), "Scramble", 18),
+                           
+                           TextBox(window, (680, 230), 28, "", DARK_GREY),
+                           QubeRender(window, (740, 330), qube_size, is_cube_form),
+                           
+                           ColoredBox(window, (565, 480), (600, 140), LAYER1_COLOR, True),
+                           TextButton(window, (1080, 490), (70, 40), "Undo", 18),
+                           TextBox(window, (492, 580), 14, "", DARK_GREY, True),  # Shows message when scrambled
+                           TextBox(window, (492, 510), 36, "Move History", DARK_GREY, True),
+                           TextBox(window, (495, 550), 16, "", DARK_GREY, True),  # Move history chain
 
-                           ColoredBox(window, (40, 80), (800, 600), LAYER1_COLOR),
-                           TextBox(window, (120, 100), 24, "Cube Style", DARK_GREY),
-                           TextBox(window, (75, 131), 18, "Net", DARK_GREY),
-                           ToggleBox(window, (100, 125), DARK_GREY, 0, False),
-                           TextBox(window, (160, 132), 18, "Cube", DARK_GREY),
-                           TextBox(window, (700, 100), 24, "Show Rotation Tips", DARK_GREY),
-                           TextBox(window, (730, 131), 18, "Yes", DARK_GREY),
-                           ToggleBox(window, (755, 125), DARK_GREY, 1, False),
-                           TextBox(window, (805, 132), 18, "No", DARK_GREY),
-                           
-                           QubeButton(window, (358, 180), (330, 200), "L\'", 2),
-                           QubeButton(window, (400, 180), (372, 200), "M\'", 3),
-                           QubeButton(window, (442, 180), (414, 200), "R", 2),
-                           QubeButton(window, (358, 620), (258, 550), "L", 2),
-                           QubeButton(window, (400, 620), (300, 550), "M", 3),
-                           QubeButton(window, (442, 620), (342, 550), "R\'", 2),
-                           
-                           QubeButton(window, (180, 358), (150, 358), "U", 2),
-                           QubeButton(window, (180, 400), (150, 400), "E\'", 3),
-                           QubeButton(window, (180, 442), (150, 442), "D\'", 2),
-                           QubeButton(window, (750, 358), (520, 288), "U\'", 2),
-                           QubeButton(window, (750, 400), (520, 330), "E", 3),
-                           QubeButton(window, (750, 442), (520, 372), "D", 2),
-                           
-                           QubeButton(window, (535, 226), (440, 430), "B\'", 2),
-                           QubeButton(window, (515, 268), (410, 460), "S", 3),
-                           QubeButton(window, (495, 310), (380, 490), "F", 2),
-                           QubeButton(window, (310, 310), (210, 320), "F\'", 2),
-                           QubeButton(window, (290, 268), (240, 290), "S\'", 3),
-                           QubeButton(window, (270, 226), (270, 260), "B", 2),
-
-                           QubeButton(window, (100, 180), None, "x", 1),
-                           QubeButton(window, (142, 180), None, "y", 1),
-                           QubeButton(window, (184, 180), None, "z", 1),
-                           QubeButton(window, (100, 222), None, "x\'", 1),
-                           QubeButton(window, (142, 222), None, "y\'", 1),
-                           QubeButton(window, (184, 222), None, "z\'", 1),
-                           
-                           TextButton(window, (160, 630), (80, 40), "Reset", 18),
-                           TextButton(window, (250, 630), (70, 40), "Undo", 18),
-                           TextButton(window, (50, 630), (100, 40), "Scramble", 18),
-                           
-                           TextBox(window, (690, 230), 28, "", DARK_GREY),
-                           QubeRender(window, (750, 330), qube_size, is_cube_form),
-                           
-                           TextBox(window, (37, 780), 14, "", DARK_GREY, True),
-                           TextBox(window, (37, 710), 36, "Move History", DARK_GREY, True),
-                           TextBox(window, (40, 750), 16, "", DARK_GREY, True),
-
-                           QubeRender(window, (400, 400), qube_size, is_cube_form),
-                           ImageBox(window, (200, 200), (530, 400)))
-    time_tab_gui: tuple = (TextBox(window, (400, 750), 60, "Times are a\'changing", DARK_GREY),
+                           QubeRender(window, (370, 370), qube_size, is_cube_form),
+                           ImageBox(window, (170, 170), (530, 400)))
+    time_tab_gui: tuple = (TextBox(window, (400, 550), 60, "Times are a\'changing", DARK_GREY),
                            TextBox(window, (50, 100), 40, "Name:", DARK_GREY, True),
                            InputBox(window, (200, 75), (200, 50), 40, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 7),
                            
-                           ColoredBox(window, (800, 75), (365, 600), LAYER1_COLOR),
+                           ColoredBox(window, (800, 75), (365, 500), LAYER1_COLOR),
                            TextBox(window, (990, 110), 36, "Leaderboard", DARK_GREY),
                            Leaderboard(window, (820, 150), 16, DARK_GREY, dummy_times),
                            
-                           TextBox(window, (900, 800), 32, "Add a time", DARK_GREY),
-                           InputBox(window, (810, 820), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
-                           InputBox(window, (880, 820), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
-                           InputBox(window, (950, 820), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
-                           TextBox(window, (835, 870), 12, "MIN", DARK_GREY),
-                           TextBox(window, (905, 870), 12, "SEC", DARK_GREY),
-                           TextBox(window, (975, 870), 12, "CS", DARK_GREY),
-                           TextBox(window, (870, 838), 18, ":", DARK_GREY),
-                           TextBox(window, (940, 838), 18, ".", DARK_GREY),
+                           TextBox(window, (900, 500), 32, "Add a time", DARK_GREY),
+                           InputBox(window, (810, 520), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
+                           InputBox(window, (880, 520), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
+                           InputBox(window, (950, 520), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
+                           TextBox(window, (835, 570), 12, "MIN", DARK_GREY),
+                           TextBox(window, (905, 570), 12, "SEC", DARK_GREY),
+                           TextBox(window, (975, 570), 12, "CS", DARK_GREY),
+                           TextBox(window, (870, 538), 18, ":", DARK_GREY),
+                           TextBox(window, (940, 538), 18, ".", DARK_GREY),
                            
                            ColoredBox(window, (100, 200), (600, 160), LAYER1_COLOR),
                            TextBox(window, (300, 275), 100, ":", DARK_GREY),
@@ -310,7 +309,7 @@ def program_window():
                 pass
             
             try:  # Undo system
-                if keys_pressed[pygame.K_BACKQUOTE] and not undo_cool or qube_tab_gui[-9].clicked:
+                if keys_pressed[pygame.K_BACKQUOTE] and not undo_cool or qube_tab_gui[-6].clicked:
                     prime: bool = "\'" not in move_history[-1]
                     if 'R' in move_history[-1]:
                         qube.r(prime)
@@ -344,7 +343,7 @@ def program_window():
                 pass
             
             # Scramble system
-            if keys_pressed[pygame.K_F8] or qube_tab_gui[-8].clicked:
+            if keys_pressed[pygame.K_F8] or qube_tab_gui[-10].clicked:
                 random_move_attempts: int = 20
                 qube.reset()
                 scramble = generate_shuffle(qube_size, random_move_attempts)
@@ -362,22 +361,24 @@ def program_window():
             if not history_length:  # If move_history is empty
                 qube_tab_gui[-4].update_text("")  # Hide move history textbox
                 qube_tab_gui[-5].update_text("")
-                qube_tab_gui[-9].set_hidden(True)  # Hide undo button
-                qube_tab_gui[-10].set_hidden(True)  # Hide solve button
+                qube_tab_gui[-6].hidden = True  # Hide undo button
+                qube_tab_gui[-7].hidden = True  # Hide move history box
+                qube_tab_gui[-11].hidden = True  # Hide reset button
             else:
                 length_text: str = f" ({history_length})" if history_length > HISTORY_OVERFLOW else ""
                 qube_tab_gui[-4].update_text("Moves to Scramble" if scrambled else "Move History" + length_text)
                 qube_tab_gui[-5].update_text("Start with WHITE front, RED top" if scrambled else "")
-                qube_tab_gui[-9].set_hidden(False)  # Show undo button
-                qube_tab_gui[-10].set_hidden(False)  # Show solve button
+                qube_tab_gui[-6].hidden = False  # Show undo button
+                qube_tab_gui[-7].hidden = False  # Show move history box
+                qube_tab_gui[-11].hidden = False  # Show reset button
             
             # Return qube to solved state
-            if keys_pressed[pygame.K_F5] or qube_tab_gui[-10].clicked:
+            if keys_pressed[pygame.K_F5] or qube_tab_gui[-11].clicked:
                 qube.reset()
                 move_history.clear()
             
             # Show back view label only if cube form shown
-            qube_tab_gui[-7].update_text("Back View" if is_cube_form else "")
+            qube_tab_gui[-9].update_text("Back View" if is_cube_form else "")
             
             # Update Move History text
             reverse_history: int = 1 if scrambled else -1
@@ -386,9 +387,9 @@ def program_window():
         elif active_tab == Tab.TIME.value:
             if keys_pressed[pygame.K_TAB] and not tab_cool:  # Tab switching
                 for i in range(3):  # 0, 1, 2
-                    if time_tab_gui[7 + i].enabled:
-                        time_tab_gui[7 + i].enabled = False
-                        time_tab_gui[(i + 1) % 3 + 7].enabled = True
+                    if time_tab_gui[7 + i].hidden:
+                        time_tab_gui[7 + i].hidden = False
+                        time_tab_gui[(i + 1) % 3 + 7].hidden = True
                         break
                 tab_cool = True
             elif not keys_pressed[pygame.K_TAB]:
@@ -439,7 +440,7 @@ def program_window():
             time_tab_gui[-1].update_text("%02d" % display_time[2])
         
         hovered_btn: str = ""
-        pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 820)), border_radius=20)  # Tab Background
+        pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 580)), border_radius=20)  # Tab Background
         for element in guis[active_tab]:  # Draw rest of GUI elements for the tab
             # Update GUI Elements
             try:
@@ -469,7 +470,7 @@ def program_window():
                         qube_size = element.selected + 1
                         # Update Qube Render
                         qube_tab_gui[-2].size = qube_size
-                        qube_tab_gui[-6].size = qube_size
+                        qube_tab_gui[-8].size = qube_size
                         qube_tab_gui[-2].is_cube_form = is_cube_form
                         if old_q_size != qube_size:
                             qube = qube_types[qube_size - 1]()
@@ -489,7 +490,7 @@ def program_window():
             except TypeError:  # Is QubeRenderer
                 qube_tab_gui[-2].draw(qube)
                 if is_cube_form:
-                    qube_tab_gui[-6].draw(qube, back_view=True)
+                    qube_tab_gui[-8].draw(qube, back_view=True)
         
         pygame.display.update()
         clock.tick(_TICK_RATE)

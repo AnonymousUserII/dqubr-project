@@ -213,10 +213,10 @@ class QubeRender:
                 # Get top left of each face
                 top_lefts: tuple = (
                     front_tl,
-                    (front_tl[0], front_tl[0] - 3 * full_dim - cell_spacing),
+                    (front_tl[0], front_tl[1] - 3 * full_dim - cell_spacing),
                     (front_tl[0] - 3 * full_dim - cell_spacing, front_tl[1]),
                     (front_tl[0] + 3 * full_dim + cell_spacing, front_tl[1]),
-                    (front_tl[0], front_tl[0] + 3 * full_dim + cell_spacing),
+                    (front_tl[0], front_tl[1] + 3 * full_dim + cell_spacing),
                     (front_tl[0] + 6 * full_dim + 2 * cell_spacing, front_tl[1])
                 )
     
