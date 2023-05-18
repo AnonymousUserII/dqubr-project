@@ -10,6 +10,7 @@ LAYER1_COLOR: pygame.Color = pygame.Color(0xBE, 0XEF, 0xFF)
 LAYER2_COLOR: pygame.Color = pygame.Color(0xDE, 0XFF, 0xFF)
 REST_BTN_COLOR: pygame.Color = pygame.Color(0xB0, 0xB0, 0xB0)
 HOVER_BTN_COLOR: pygame.Color = pygame.Color(0xD0, 0xD0, 0xD0)
+HIDDEN_BLUE: pygame.Color = pygame.Color(0x70, 0xB9, 0xF0)
 
 # Cell Colors
 WHITE: pygame.Color = pygame.Color(0xFF, 0xFF, 0xFF)

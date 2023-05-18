@@ -25,47 +25,52 @@ class Tab(Enum):
     TIME = 1
 
 
-class SFXChannel(Enum):
-    TAB = 0
-    GUI = 1
-    ROTATE = 2
-
-
 # Window Properties
 _RES: tuple[int, int] = (1200, 660)
 _TITLE: str = "dQubr Project"
-_TICK_RATE: int = 60
+_TICK_RATE: int = 120
 
 # Program constants
 HISTORY_OVERFLOW: int = 24
 
 
 # Dictionary to hold arrow graphics for qube turning
-moves: list[str] = ["cubearrow"]
+moves: list[str] = []
 for form in ("net", "cube"):
     for rotation in ('f', 'b', 'r', 'l', 'u', 'd', 'm', 'e', 's', 'x', 'y', 'z'):
-        moves.append("{}_{}".format(form, rotation))
-        moves.append("{}_{}p".format(form, rotation))
+        moves.append(f"{form}_{rotation}")
+        moves.append(f"{form}_{rotation}p")
 qube_arrows: dict[str, pygame.Surface] = {}
 for move in moves:
-    try:
-        qube_arrows[move] = pygame.image.load(path.join("Assets", "QubeArrows", f"{move}.png"))
-    except FileNotFoundError:
-        print("Missing:", move)
-        pass
+    qube_arrows[move] = pygame.image.load(path.join("Assets", "QubeArrows", f"{move}.png"))
+
+# Dictionary to hold keyboard graphics for the two-hand timer
+keyboard_img: dict[str, pygame.Surface] = {"none": pygame.image.load(path.join("Assets", "keyboard_base.png")),
+                                           "left": pygame.image.load(path.join("Assets", "keyboard_l.png")),
+                                           "right": pygame.image.load(path.join("Assets", "keyboard_r.png")),
+                                           "both": pygame.image.load(path.join("Assets", "keyboard_lr.png"))}
+
+# Retrieve leaderboard times from file
+with open(path.join("Data", "times.txt")) as time_history:
+    times: list = time_history.read().strip().split("\n")
+    leaderboard: list = []
+    for record in times:
+        (player, score) = record.split()
+        leaderboard.append((score, player))
+leaderboard.sort()
 
 
-def process_time(time: float) -> tuple[int, int, int]:
+def process_time(t: float) -> tuple[int, int, int]:
     """
     Takes time in seconds
     Returns time in minutes:seconds:centiseconds
     """
-    time = min(time, 99 * 60 + 99.99)  # Set a maximum possible time of 99:99:99
-    minutes: int = int(time // 60)
-    time -= minutes * 60
-    seconds: int = int(time)
-    time -= seconds
-    centiseconds: int = int(time * 100)
+    t = min(t, 99 * 60 + 99.99)  # Set a maximum possible time of 99:99:99
+    minutes: int = int(t // 60)
+    t -= minutes * 60
+    seconds: int = int(t)
+    t -= seconds
+    centiseconds: int = int(t * 100)
     return minutes, seconds, centiseconds
 
 
@@ -79,12 +84,12 @@ def program_window():
     
     # Sounds
     tab_sound: pygame.mixer.Sound = pygame.mixer.Sound(path.join("Assets", "TabClick.wav"))
-    pygame.mixer.Channel(SFXChannel.TAB.value).set_volume(0.4)
+    pygame.mixer.Channel(0).set_volume(0.4)
     
     # Tab buttons
     qube_tab_btn: TabButton = TabButton(window, (50, 10), (200, 60), "Virtual Qube")
     time_tab_btn: TabButton = TabButton(window, (260, 10), (200, 60), "Times")
-    active_tab: int = Tab.QUBE.value
+    active_tab: int = Tab.TIME.value
 
     qube = Qube3()
     qube_size: int = 3
@@ -104,12 +109,10 @@ def program_window():
     right_keys: set = {pygame.K_u, pygame.K_i, pygame.K_o, pygame.K_p,
                        pygame.K_j, pygame.K_k, pygame.K_l, pygame.K_SEMICOLON,
                        pygame.K_m, pygame.K_COMMA, pygame.K_PERIOD, pygame.K_SLASH}
-    dummy_times: tuple = (("PLR", "00:58.21"), ("PLR", "00:30.00"), ("PLR", "00:47.60"), ("PLR", "01:08.75"))
-    
-    numbers: str = "0123456789"
+    nums: str = "0123456789"
     
     # GUI elements of each tab
-    qube_tab_gui: tuple = (
+    qube_tab_gui: tuple = (TextBox(window, (1100, 600), 8, "Turning and turning...", HIDDEN_BLUE),
                            # Settings
                            TextBox(window, (850, 200), 24, "Cube Size", DARK_GREY, True),
                            RadioButtons(window, (870, 240), ("1x1x1", "2x2x2", "3x3x3"), DARK_GREY, 2),
@@ -166,38 +169,41 @@ def program_window():
 
                            QubeRender(window, (370, 370), qube_size, is_cube_form),
                            ImageBox(window, (170, 170), (530, 400)))
-    time_tab_gui: tuple = (TextBox(window, (400, 550), 60, "Times are a\'changing", DARK_GREY),
+    time_tab_gui: tuple = (TextBox(window, (400, 190), 9, "Times are a\'changing", HIDDEN_BLUE),
                            TextBox(window, (50, 100), 40, "Name:", DARK_GREY, True),
                            InputBox(window, (200, 75), (200, 50), 40, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 7),
                            
-                           ColoredBox(window, (800, 75), (365, 500), LAYER1_COLOR),
+                           ColoredBox(window, (800, 75), (365, 400), LAYER1_COLOR),
                            TextBox(window, (990, 110), 36, "Leaderboard", DARK_GREY),
-                           Leaderboard(window, (820, 150), 16, DARK_GREY, dummy_times),
+                           Leaderboard(window, (800, 150), 14, DARK_GREY, leaderboard),
                            
-                           TextBox(window, (900, 500), 32, "Add a time", DARK_GREY),
-                           InputBox(window, (810, 520), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
-                           InputBox(window, (880, 520), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
-                           InputBox(window, (950, 520), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, numbers),
-                           TextBox(window, (835, 570), 12, "MIN", DARK_GREY),
-                           TextBox(window, (905, 570), 12, "SEC", DARK_GREY),
-                           TextBox(window, (975, 570), 12, "CS", DARK_GREY),
-                           TextBox(window, (870, 538), 18, ":", DARK_GREY),
-                           TextBox(window, (940, 538), 18, ".", DARK_GREY),
+                           TextBox(window, (900, 550), 32, "Add a time", DARK_GREY),
+                           InputBox(window, (810, 570), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
+                           InputBox(window, (880, 570), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
+                           InputBox(window, (950, 570), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
+                           TextBox(window, (835, 620), 12, "MIN", DARK_GREY),
+                           TextBox(window, (905, 620), 12, "SEC", DARK_GREY),
+                           TextBox(window, (975, 620), 12, "CS", DARK_GREY),
+                           TextBox(window, (870, 588), 18, ":", DARK_GREY),
+                           TextBox(window, (940, 588), 18, ".", DARK_GREY),
+                           
+                           ImageBox(window, (250, 500), (288, 69)),
+                           TextBox(window, (390, 600), 18, "Ready timer by holding a key on both sides", DARK_GREY),
                            
                            ColoredBox(window, (100, 200), (600, 160), LAYER1_COLOR),
-                           TextBox(window, (300, 275), 100, ":", DARK_GREY),
+                           TextBox(window, (300, 270), 100, ":", DARK_GREY),
                            TextBox(window, (500, 275), 100, ".", DARK_GREY),
-                           TextBox(window, (200, 280), 100, "00", DARK_GREY),
-                           TextBox(window, (400, 280), 100, "00", DARK_GREY),
-                           TextBox(window, (600, 280), 100, "00", DARK_GREY))
+                           TextBox(window, (200, 285), 100, "00", DARK_GREY, False, True),
+                           TextBox(window, (400, 285), 100, "00", DARK_GREY, False, True),
+                           TextBox(window, (600, 285), 100, "00", DARK_GREY, False, True))
     guis: tuple = qube_tab_gui, time_tab_gui
     
-    # Cooldowns
-    fc, xc, yc, zc, rc, lc, uc, dc, bc, mc, ec, sc = tuple(False for _ in range(12))
+    # Cooldowns for keyboard shortcuts
+    fc, xc, yc, zc, rc, lc, uc, dc, bc, mc, ec, sc = (False for _ in range(12))
     undo_cool = False
     timer_cool = False
     tab_cool = False
-
+    
     running: bool = True
     while running:
         events: list[pygame.event] = pygame.event.get()
@@ -206,16 +212,12 @@ def program_window():
                 running = False
                 break
         keys_pressed: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
-        try:
-            qube_arrows["cubearrow"] = pygame.image.load(path.join("Assets", "QubeArrows", f"cubearrow.png"))
-        except pygame.error:
-            pass
         
         for i, tab_button in enumerate((qube_tab_btn, time_tab_btn)):
             tab_button.update(active_tab == i)  # Sets button to hover color if its tab is active
             if tab_button.clicked and not active_tab == i:  # Prevent sound from playing if tab already selected
                 active_tab = i
-                pygame.mixer.Channel(SFXChannel.TAB.value).play(tab_sound)
+                pygame.mixer.Channel(0).play(tab_sound)
                 
             tab_button.draw()
         
@@ -386,11 +388,19 @@ def program_window():
                                          + (", ..." if len(move_history) > HISTORY_OVERFLOW else ""))
         elif active_tab == Tab.TIME.value:
             if keys_pressed[pygame.K_TAB] and not tab_cool:  # Tab switching
-                for i in range(3):  # 0, 1, 2
-                    if time_tab_gui[7 + i].hidden:
-                        time_tab_gui[7 + i].hidden = False
-                        time_tab_gui[(i + 1) % 3 + 7].hidden = True
-                        break
+                shifted: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
+                if not shifted:
+                    for i in range(3):
+                        if time_tab_gui[7 + i].enabled:
+                            time_tab_gui[7 + i].enabled = False
+                            time_tab_gui[(i + 1) % 3 + 7].enabled = True
+                            break
+                else:
+                    for i in range(2, -1, -1):
+                        if time_tab_gui[7 + i].enabled:
+                            time_tab_gui[7 + i].enabled = False
+                            time_tab_gui[(i - 1) % 3 + 7].enabled = True
+                            break
                 tab_cool = True
             elif not keys_pressed[pygame.K_TAB]:
                 tab_cool = False
@@ -415,23 +425,37 @@ def program_window():
                         right_activated = True
                         break
                 
+                # Update keyboard graphic
+                selected: str = "none"
+                if left_activated and right_activated:
+                    selected = "both"
+                elif left_activated:
+                    selected = "left"
+                elif right_activated:
+                    selected = "right"
+                time_tab_gui[-8].update_state(keyboard_img[selected])
+                
                 if not timer_running:
                     if left_activated and right_activated and not timer_cool:
                         is_ready = True
                         current_time = start_time
+                        time_tab_gui[-7].update_text("Release to start timer")
                     else:
                         if is_ready:
                             is_ready = False
                             timer_running = True
                             start_time = time()
                             current_time = start_time
+                            time_tab_gui[-7].update_text("Press a key on both sides to stop timer")
                         elif not (left_activated and right_activated):
                             timer_cool = False
+                            time_tab_gui[-7].update_text("Ready timer by pressing a key on both sides")
                 else:
                     current_time = time()
                     if left_activated and right_activated:
                         timer_running = False
                         timer_cool = True
+                        time_tab_gui[-7].update_text("Timer stopped")
             
             # Update timer
             display_time: tuple = process_time(current_time - start_time)
