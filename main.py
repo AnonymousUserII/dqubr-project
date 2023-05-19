@@ -6,6 +6,7 @@ with redirect_stdout(None):
     import pygame
 
 from Assets.colors import *
+from Assets.sounds import *
 from Classes.GUI.TabButton import TabButton
 from Classes.GUI.TextBox import TextBox
 from Classes.GUI.TextButton import TextButton
@@ -51,10 +52,12 @@ keyboard_img: dict[str, pygame.Surface] = {"none": pygame.image.load(path.join("
                                            "both": pygame.image.load(path.join("Assets", "keyboard_lr.png"))}
 
 # Retrieve leaderboard times from file
-with open(path.join("Data", "times.txt")) as time_history:
+with open(path.join("Data", "times.timmy")) as time_history:
     times: list = time_history.read().strip().split("\n")
     leaderboard: list = []
     for record in times:
+        if not record:  # If the line is blank
+            continue
         (player, score) = record.split()
         leaderboard.append((score, player))
 leaderboard.sort()
@@ -82,9 +85,10 @@ def program_window():
     
     clock: pygame.time.Clock = pygame.time.Clock()
     
-    # Sounds
-    tab_sound: pygame.mixer.Sound = pygame.mixer.Sound(path.join("Assets", "TabClick.wav"))
-    pygame.mixer.Channel(0).set_volume(0.4)
+    # Sound Channels
+    pygame.mixer.Channel(0).set_volume(0.1)  # TabButtons
+    pygame.mixer.Channel(1).set_volume(0.3)  # TextButtons
+    pygame.mixer.Channel(2).set_volume(0.4)  # Cube Turns
     
     # Tab buttons
     qube_tab_btn: TabButton = TabButton(window, (50, 10), (200, 60), "Virtual Qube")
@@ -175,34 +179,51 @@ def program_window():
                            
                            ColoredBox(window, (800, 75), (365, 400), LAYER1_COLOR),
                            TextBox(window, (990, 110), 36, "Leaderboard", DARK_GREY),
-                           Leaderboard(window, (800, 150), 14, DARK_GREY, leaderboard),
+                           Leaderboard(window, (820, 150), 14, DARK_GREY, leaderboard),
                            
-                           TextBox(window, (900, 550), 32, "Add a time", DARK_GREY),
-                           InputBox(window, (810, 570), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
-                           InputBox(window, (880, 570), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
-                           InputBox(window, (950, 570), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
-                           TextBox(window, (835, 620), 12, "MIN", DARK_GREY),
-                           TextBox(window, (905, 620), 12, "SEC", DARK_GREY),
-                           TextBox(window, (975, 620), 12, "CS", DARK_GREY),
-                           TextBox(window, (870, 588), 18, ":", DARK_GREY),
-                           TextBox(window, (940, 588), 18, ".", DARK_GREY),
+                           # Add a time section
+                           TextBox(window, (900, 520), 32, "Add a time", DARK_GREY),
+                           InputBox(window, (810, 540), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
+                           InputBox(window, (880, 540), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
+                           InputBox(window, (950, 540), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
+                           TextBox(window, (835, 590), 12, "MIN", DARK_GREY),
+                           TextBox(window, (905, 590), 12, "SEC", DARK_GREY),
+                           TextBox(window, (975, 590), 12, "CS", DARK_GREY),
+                           TextBox(window, (870, 558), 18, ':', DARK_GREY),
+                           TextBox(window, (940, 558), 18, '.', DARK_GREY),
+                           TextButton(window, (1030, 542), (36, 36), '+', 36, 2),
+                           TextBox(window, (850, 615), 18, "", WARN_RED, True),  # Prompt to fill in all fields
                            
+                           # Prompts to save player times
+                           TextButton(window, (250, 380), (300, 50), "Save to Leaderboard", 24, 1),
+                           TextBox(window, (400, 450), 18, "", WARN_RED),  # Prompt below button
+                           TextBox(window, (300, 140), 18, "", WARN_RED),  # Prompt next to name
+                           
+                           # Keyboard Graphic
                            ImageBox(window, (250, 500), (288, 69)),
                            TextBox(window, (390, 600), 18, "Ready timer by holding a key on both sides", DARK_GREY),
                            
+                           # Timer shown
                            ColoredBox(window, (100, 200), (600, 160), LAYER1_COLOR),
                            TextBox(window, (300, 270), 100, ":", DARK_GREY),
                            TextBox(window, (500, 275), 100, ".", DARK_GREY),
-                           TextBox(window, (200, 285), 100, "00", DARK_GREY, False, True),
-                           TextBox(window, (400, 285), 100, "00", DARK_GREY, False, True),
-                           TextBox(window, (600, 285), 100, "00", DARK_GREY, False, True))
+                           TextBox(window, (200, 285), 100, "00", DARK_GREY, False, True),  # Minutes
+                           TextBox(window, (400, 285), 100, "00", DARK_GREY, False, True),  # Seconds
+                           TextBox(window, (600, 285), 100, "00", DARK_GREY, False, True))  # Centiseconds
     guis: tuple = qube_tab_gui, time_tab_gui
+    
+    # Start with specific elements hidden
+    time_tab_gui[-11].hidden = True
     
     # Cooldowns for keyboard shortcuts
     fc, xc, yc, zc, rc, lc, uc, dc, bc, mc, ec, sc = (False for _ in range(12))
     undo_cool = False
     timer_cool = False
     tab_cool = False
+    prev_cool, next_cool = False, False
+    
+    formatted_time: list = ["00", "00", "00"]  # Holds the minutes, seconds, and centiseconds of timer as strings
+    input_box_active: bool = False  # Records when an input box is active on the times tab
     
     running: bool = True
     while running:
@@ -217,13 +238,13 @@ def program_window():
             tab_button.update(active_tab == i)  # Sets button to hover color if its tab is active
             if tab_button.clicked and not active_tab == i:  # Prevent sound from playing if tab already selected
                 active_tab = i
-                pygame.mixer.Channel(0).play(tab_sound)
+                pygame.mixer.Channel(0).play(TAB_CLICK)
                 
             tab_button.draw()
         
         if active_tab == Tab.QUBE.value:
             primed: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
-            try:  # Keyboard moving system
+            try:  # Rotation keyboard shortcuts
                 if keys_pressed[pygame.K_f] and not fc:
                     qube.f(primed)
                     move_history.append("F" + ("\'" if primed else ""))
@@ -354,10 +375,8 @@ def program_window():
                 scrambled = True
                 qube_tab_gui[-4].update_text("Moves to Scramble")
             
-            if fc | xc | yc | zc | rc | lc | uc | dc | bc | mc | undo_cool:  # If any move has been made
+            if fc | xc | yc | zc | rc | lc | uc | dc | bc | mc | undo_cool:  # If a keyboard shortcut was used to turn
                 scrambled = False
-                # Set textbox to original text
-                qube_tab_gui[-4].update_text("Move History")
             
             history_length: int = len(move_history)
             if not history_length:  # If move_history is empty
@@ -406,10 +425,10 @@ def program_window():
                 tab_cool = False
             
             # To skip keyboard hits when an inbox box is active
-            input_box_active: bool = time_tab_gui[2].update_field(events) | \
-                                     time_tab_gui[7].update_field(events) | \
-                                     time_tab_gui[8].update_field(events) | \
-                                     time_tab_gui[9].update_field(events)
+            input_box_active = time_tab_gui[2].update_field(events) | \
+                               time_tab_gui[7].update_field(events) | \
+                               time_tab_gui[8].update_field(events) | \
+                               time_tab_gui[9].update_field(events)
             if time_tab_gui[8].text:
                 if int(time_tab_gui[8].text) >= 60:  # If inputted seconds is greater than 60
                     time_tab_gui[8].text = "59"
@@ -424,6 +443,19 @@ def program_window():
                     if keys_pressed[key]:
                         right_activated = True
                         break
+                
+                # Leaderboard page change keyboard shortcut
+                if keys_pressed[pygame.K_RIGHT] and not next_cool:
+                    time_tab_gui[5].increment_page()
+                    next_cool = True
+                elif not keys_pressed[pygame.K_RIGHT]:
+                    next_cool = False
+                
+                if keys_pressed[pygame.K_LEFT] and not prev_cool:
+                    time_tab_gui[5].decrement_page()
+                    prev_cool = True
+                elif not keys_pressed[pygame.K_LEFT]:
+                    prev_cool = False
                 
                 # Update keyboard graphic
                 selected: str = "none"
@@ -440,6 +472,7 @@ def program_window():
                         is_ready = True
                         current_time = start_time
                         time_tab_gui[-7].update_text("Release to start timer")
+                        time_tab_gui[-11].hidden = True
                     else:
                         if is_ready:
                             is_ready = False
@@ -456,12 +489,14 @@ def program_window():
                         timer_running = False
                         timer_cool = True
                         time_tab_gui[-7].update_text("Timer stopped")
+                        time_tab_gui[-11].hidden = False
             
             # Update timer
             display_time: tuple = process_time(current_time - start_time)
-            time_tab_gui[-3].update_text("%02d" % display_time[0])
-            time_tab_gui[-2].update_text("%02d" % display_time[1])
-            time_tab_gui[-1].update_text("%02d" % display_time[2])
+            formatted_time = ["%02d" % display_time[i] for i in range(3)]
+            time_tab_gui[-3].update_text(formatted_time[0])
+            time_tab_gui[-2].update_text(formatted_time[1])
+            time_tab_gui[-1].update_text(formatted_time[2])
         
         hovered_btn: str = ""
         pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 580)), border_radius=20)  # Tab Background
@@ -480,15 +515,21 @@ def program_window():
                             qube.apply_moves((move,))
                             move_history.append(move)
                             scrambled = False
+                            pygame.mixer.Channel(2).play(ROTATE)
                 
                 element.update()
+                
                 if type(element) == ToggleBox:
+                    if element.clicked:
+                        pygame.mixer.Channel(1).play(CLICK)
                     if active_tab == Tab.QUBE.value:
                         if element.id == 0:
                             is_cube_form = element.state
                         elif element.id == 1:
                             hide_rotation_tips = element.state
                 elif type(element) == RadioButtons:
+                    if element.changed:
+                        pygame.mixer.Channel(1).play(CLICK)
                     if active_tab == Tab.QUBE.value:
                         old_q_size: int = qube_size
                         qube_size = element.selected + 1
@@ -499,6 +540,33 @@ def program_window():
                         if old_q_size != qube_size:
                             qube = qube_types[qube_size - 1]()
                             move_history.clear()
+                elif type(element) == TextButton:
+                    if element.clicked:
+                        pygame.mixer.Channel(1).play(CLICK)
+                        if element.identifier == 1:
+                            if len(time_tab_gui[2].text):  # If there is name, then add time to leaderboard
+                                time_string: str = f"{formatted_time[0]}:{formatted_time[1]}.{formatted_time[2]}"
+                                time_tab_gui[5].add((time_string, time_tab_gui[2].text))
+                            else:  # Then prompt user for name
+                                time_tab_gui[-10].update_text("Please fill in a name to save this time")
+                                time_tab_gui[-9].update_text("Fill in name here")
+                        elif element.identifier == 2:  # Same thing for adding a time
+                            if len(time_tab_gui[7].text) and len(time_tab_gui[8].text) and len(time_tab_gui[9].text):
+                                if len(time_tab_gui[2].text):  # Check for name
+                                    mins, sec, cs = time_tab_gui[7].text, time_tab_gui[8].text, time_tab_gui[9].text
+                                    mins, sec, cs = ("%02d" % unit for unit in (int(mins), int(sec), int(cs)))
+                                    time_string: str = f"{mins}:{sec}.{cs}"
+                                    time_tab_gui[5].add((time_string, time_tab_gui[2].text))
+                                else:
+                                    time_tab_gui[-9].update_text("Fill in name here")
+                            else:
+                                time_tab_gui[16].update_text("Please fill in all fields")
+                elif type(element) == Leaderboard:
+                    if element.changed:
+                        pygame.mixer.Channel(1).play(CLICK)
+                elif type(element) == InputBox:
+                    if element.changed_enabled:
+                        pygame.mixer.Channel(1).play(CLICK)
             except (AttributeError, TypeError):  # Element is static or requires an argument
                 if type(element) == ImageBox:
                     if active_tab == Tab.QUBE.value and not hide_rotation_tips:  # Show corresponding arrows
@@ -507,6 +575,12 @@ def program_window():
                         image_name: str = f"{form}_{rotation}"
                         element.update_state(qube_arrows[image_name] if hovered_btn else None)
                 pass
+            
+            if len(time_tab_gui[2].text):  # If there is a name for the timer, hide warning prompts
+                time_tab_gui[-10].update_text("")
+                time_tab_gui[-9].update_text("")
+            if len(time_tab_gui[7].text) and len(time_tab_gui[8].text) and len(time_tab_gui[9].text):  # Adding a time
+                time_tab_gui[16].update_text("")
             
             # Draw GUI Elements
             try:
@@ -517,6 +591,7 @@ def program_window():
                     qube_tab_gui[-8].draw(qube, back_view=True)
         
         pygame.display.update()
+        _TICK_RATE = 480 if timer_running and active_tab == Tab.TIME.value and not input_box_active else 120
         clock.tick(_TICK_RATE)
 
 

@@ -19,9 +19,11 @@ class InputBox(Button):
         self.font: pygame.font = pygame.font.Font(join("Assets", "fcm.ttf"), text_height)
         self.accepted: str = accepted_keys
         self.enabled: bool = False
+        self.changed_enabled: bool = False
     
     def update_field(self, events: list[pygame.event]) -> bool:
         super().update()
+        old_enabled: bool = self.enabled
         if self.clicked:
             self.enabled = True
         elif pygame.mouse.get_pressed()[0] and not self.hover:
@@ -41,6 +43,7 @@ class InputBox(Button):
                 except AttributeError:  # If there is no ASCII for the "input" key
                     pass
         
+        self.changed_enabled = old_enabled != self.enabled
         self.color = self.active_color if self.enabled else self.bg_color
         return self.enabled
     

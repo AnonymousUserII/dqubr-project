@@ -2,7 +2,9 @@ from os.path import join
 import pygame
 
 from Assets.colors import DARK_GREY, FRAME_COLOR, REST_TAB_COLOR
+from Assets.sounds import TAB_CLICK
 from Classes.GUI.Button import Button
+
 
 
 class TabButton(Button):
@@ -18,7 +20,7 @@ class TabButton(Button):
         shadow_color: pygame.Color = pygame.Color(0x6E, 0xAE, 0xEE)
         self.shadow: pygame.Surface = pygame.font.Font(join("Assets", "od.otf"), 20).render(text, True, shadow_color)
         self.shadow_rect: pygame.Rect = self.label.get_rect(center=shadow_rect.center)
-        # Adjust labels to be slightly higher than center
+        # Adjust labels to be slightly higher than the center of its rect
         self.label_rect.top -= 3
         self.shadow_rect.top -= 3
     
@@ -31,4 +33,6 @@ class TabButton(Button):
         pygame.draw.rect(self.window, self.color, self.rect, border_radius=12)
         self.window.blit(self.shadow, self.shadow_rect)
         self.window.blit(self.label, self.label_rect)
+        if self.clicked:
+            pygame.mixer.Channel(0).play(TAB_CLICK)
         return None

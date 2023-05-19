@@ -1,12 +1,18 @@
+from os import path
+
 import pygame
 
 from Classes.GUI.TextButton import TextButton
+from Assets.colors import LIGHT_BLACK
 
 
 class QubeButton(TextButton):
     def __init__(self, window: pygame.Surface, net_pos: tuple[int, int], cube_pos: tuple[int, int] | None,
                  text: str, min_cube_size: int):
         super().__init__(window, net_pos, (30, 30), text, 16)
+        self.label: pygame.Surface = pygame.font.Font(path.join("Assets", "od.otf"), 16) \
+            .render(text, True, LIGHT_BLACK)
+        self.label_rect: pygame.Rect = self.label.get_rect(center=self.rect.center)
         self.net_pos, self.cube_pos = net_pos, cube_pos if cube_pos is not None else net_pos
         self.rect.center = self.label_rect.center = net_pos  # Button position centered at given coordinate
         self.text: str = text

@@ -35,16 +35,19 @@ class RadioButtons:
         self.first_pos: tuple[int, int] = pos
         self.buttons: list[RadioButton] = []
         self.selected: int = init
+        self.changed: bool = False
         
         for i, label in enumerate(labels):
             b_pos = pos[0], pos[1] + i * (max(2 * button_radius, text_size) + rb_spacing)
             self.buttons.append(RadioButton(window, b_pos, label, color))
     
     def update(self) -> None:
+        old_selected: int = self.selected
         for i, button in enumerate(self.buttons):
             button.update()
             if button.clicked:
                 self.selected = i
+        self.changed = old_selected != self.selected
         return None
     
     def draw(self) -> None:
