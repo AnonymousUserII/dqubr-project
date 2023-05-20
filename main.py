@@ -1,7 +1,7 @@
 from os import path
 from time import perf_counter as time
 from contextlib import redirect_stdout
-with redirect_stdout(None):
+with redirect_stdout(None):  # Load PyGame without welcome message
     import pygame
 
 from Assets.colors import *
@@ -21,11 +21,11 @@ from Classes.Utility.Qube import *
 # Window Properties
 _RES: tuple[int, int] = (1200, 660)
 _TITLE: str = "dQubr Project"
+_ICON: pygame.Surface = pygame.image.load(path.join("Assets", "dqube.png"))
 _TICK_RATE: int = 240
-
-# Program constants
+# Constants
 HISTORY_OVERFLOW: int = 24
-
+INSPECTION_TIME: int = 15
 
 # Dictionary to hold arrow graphics for qube turning
 moves: list[str] = []
@@ -74,6 +74,7 @@ def program_window():
     window: pygame.Surface = pygame.display.set_mode(_RES, pygame.DOUBLEBUF)
     window.fill(BG_COLOR)
     pygame.display.set_caption(_TITLE)
+    pygame.display.set_icon(_ICON)
     
     clock: pygame.time.Clock = pygame.time.Clock()
     
@@ -194,7 +195,8 @@ def program_window():
                            # Hover elements for time preparation
                            TextBox(window, (590, 85), 18, "Hover for Preparation", DARK_GREY),
                            TextButton(window, (450, 105), (120, 30), "Scramble", 14, 3, "", (600, 30)),
-                           TextButton(window, (580, 105), (180, 30), "Inspection (15s)", 14, 4, "", (120, 40)),
+                           TextButton(window, (580, 105), (180, 30), f"Inspection ({INSPECTION_TIME}s)",
+                                      14, 4, "", (120, 40)),
                            
                            # Prompts to save player times
                            TextButton(window, (250, 380), (300, 50), "Save to Leaderboard", 24, 1),
@@ -595,27 +597,29 @@ def program_window():
                                 time_tab_gui[16].update_text("Please fill in all fields")
                     if element.hover:
                         if element.identifier == 3:
-                            if not element.was_hover:  # If it is a new hover
+                            if element.clicked or not element.was_hover:  # If it is a new hover or clicked
                                 element.tooltip = ", ".join(generate_shuffle(qube_size, 20, True))
                         if element.identifier == 4:
-                            if not element.was_hover:
+                            if element.clicked or not element.was_hover:
                                 inspection_start = time()
                             else:
-                                inspection_remaining = 15 - (time() - inspection_start)
+                                inspection_remaining = INSPECTION_TIME - (time() - inspection_start)
                                 inspect_formatted = process_time(inspection_remaining)
                                 element.tooltip = f"{'%02d' % inspect_formatted[1]}.{'%02d' % inspect_formatted[2]}"
                 elif type(element) == Leaderboard:
                     if element.changed:
                         pygame.mixer.Channel(1).play(click)
                 elif type(element) == InputBox:
-                    if element.changed_enabled:
+                    if timer_running:  # Hinder input field activation while timer is running
+                        element.enabled = False
+                    elif element.changed_enabled:
                         pygame.mixer.Channel(1).play(click)
             except (AttributeError, TypeError):  # Element is static or requires an argument
                 if type(element) == ImageBox:
                     if active_tab == 0 and not hide_rotation_tips:  # Show corresponding arrows
-                        form: str = "cube" if is_cube_form else "net"
-                        rotation: str = hovered_btn.replace("\'", 'p').lower()
-                        image_name: str = f"{form}_{rotation}"
+                        shape: str = "cube" if is_cube_form else "net"
+                        rot_type: str = hovered_btn.replace("\'", 'p').lower()
+                        image_name: str = f"{shape}_{rot_type}"
                         element.update_state(qube_arrows[image_name] if hovered_btn else None)
                 pass
             
