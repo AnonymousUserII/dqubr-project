@@ -6,9 +6,10 @@ Some random application for cubers. Made in Python because.
 
 ## Current Features
 - Interactive virtual cube + indicators
+- Timer to simulate a two-handed timer + time history
 
-## Controls
-Cube turning is processed in SiGN notation.
+## Keyboard Controls
+Cube turning is processed in SiGN notation. Use SHIFT for prime variant.
 
 |  Feature | Key(s) |
 |---------:|:-------|

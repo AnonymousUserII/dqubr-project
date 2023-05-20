@@ -68,7 +68,7 @@ class Leaderboard:
         self.increment_btn: ArrowButton = ArrowButton(self.window, (paging_pos[0] + 60, paging_pos[1] - 8), 15, "right")
         
         self.delete_mode_btn: TextButton = TextButton(self.window, (paging_pos[0] - 170, paging_pos[1] - 15), (80, 30),
-                                                      "", 18, None, "Delete entries by clicking")
+                                                      "", 18, None, "Delete entries by clicking", (200, 30))
         self.delete_btn_label: TextBox = TextBox(self.window, (paging_pos[0] - 130, paging_pos[1]), 16,
                                                  "Remove", DARK_GREY)
         self.delete_prompt: TextBox = TextBox(self.window, (paging_pos[0], paging_pos[1] - 35), 16, "", WARN_RED)

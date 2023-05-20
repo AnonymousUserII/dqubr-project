@@ -1,5 +1,5 @@
 from os import path
-from time import time
+from time import perf_counter as time
 from enum import Enum
 from contextlib import redirect_stdout
 with redirect_stdout(None):
@@ -68,6 +68,7 @@ def process_time(t: float) -> tuple[int, int, int]:
     Returns time in minutes:seconds:centiseconds
     """
     t = min(t, 99 * 60 + 99.99)  # Set a maximum possible time of 99:99:99
+    t = max(t, 0)  # Keep t above zero
     minutes: int = int(t // 60)
     t -= minutes * 60
     seconds: int = int(t)
@@ -194,6 +195,9 @@ def program_window():
                            TextButton(window, (1030, 542), (36, 36), '+', 36, 2),
                            TextBox(window, (850, 615), 18, "", WARN_RED, True),  # Prompt to fill in all fields
                            
+                           TextButton(window, (450, 85), (150, 30), "Give Scramble", 14, 3, "", (600, 30)),
+                           TextButton(window, (610, 85), (150, 30), "15s Inspection", 14, 4, "", (120, 40)),
+                           
                            # Prompts to save player times
                            TextButton(window, (250, 380), (300, 50), "Save to Leaderboard", 24, 1),
                            TextBox(window, (400, 450), 18, "", WARN_RED),  # Prompt below button
@@ -222,9 +226,10 @@ def program_window():
     prev_cool, next_cool = False, False
     
     undo_start: float | None = None  # Records when the undo button is first pressed
+    inspection_start: float = time()  # Records when inspection time starts
     
     formatted_time: list = ["00", "00", "00"]  # Holds the minutes, seconds, and centiseconds of timer as strings
-    input_box_active: bool = False  # Records when an input box is active on the times tab
+    input_box_active: bool  # Records when an input box is active on the times tab
     
     running: bool = True
     while running:
@@ -529,7 +534,7 @@ def program_window():
         tooltips: list = [qube_tab_btn.draw(), time_tab_btn.draw()]
         pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 580)), border_radius=20)  # Tab Background
         
-        for element in guis[active_tab]:  # Draw rest of GUI elements for the tab
+        for element in guis[active_tab]:  # Draw GUI elements for the tab
             # Update GUI Elements
             try:
                 if type(element) == QubeButton:
@@ -590,6 +595,17 @@ def program_window():
                                     time_tab_gui[-9].update_text("Fill in name here")
                             else:
                                 time_tab_gui[16].update_text("Please fill in all fields")
+                    if element.hover:
+                        if element.identifier == 3:
+                            if not element.was_hover:  # If it is a new hover
+                                element.tooltip = ", ".join(generate_shuffle(qube_size, 20, True))
+                        if element.identifier == 4:
+                            if not element.was_hover:
+                                inspection_start = time()
+                            else:
+                                inspection_remaining = 15 - (time() - inspection_start)
+                                inspect_formatted = process_time(inspection_remaining)
+                                element.tooltip = f"{'%02d' % inspect_formatted[1]}.{'%02d' % inspect_formatted[2]}"
                 elif type(element) == Leaderboard:
                     if element.changed:
                         pygame.mixer.Channel(1).play(CLICK)
@@ -625,8 +641,7 @@ def program_window():
                 tooltip.draw()
         
         pygame.display.update()
-        timer_updating: bool = timer_running & ~input_box_active  # If timer text is updating and can be stopped
-        clock.tick(_TICK_RATE * (4 if timer_updating else 1))
+        clock.tick(_TICK_RATE)
 
 
 if __name__ == '__main__':
