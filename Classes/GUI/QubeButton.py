@@ -2,8 +2,8 @@ from os import path
 
 import pygame
 
-from Classes.GUI.TextButton import TextButton
 from Assets.colors import LIGHT_BLACK
+from Classes.GUI.TextButton import TextButton
 
 
 class QubeButton(TextButton):

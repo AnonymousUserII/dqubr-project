@@ -1,4 +1,5 @@
 from os.path import join
+from time import time
 
 import pygame
 
@@ -55,4 +56,10 @@ class InputBox(Button):
         label_rect: pygame.Rect = label.get_rect(midleft=self.rect.midleft)
         label_rect.x += 5
         self.window.blit(label, label_rect)
+        
+        # Blinking cursor
+        if self.enabled and int(time() * 2) % 2:  # Blink rate is 500ms
+            cursor_pos: tuple[int, int] = label_rect.right, label_rect.top + 3
+            pygame.draw.rect(self.window, self.text_color, pygame.Rect(cursor_pos, (2, self.text_height)))
+        
         return None

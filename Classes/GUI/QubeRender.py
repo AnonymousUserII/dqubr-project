@@ -1,5 +1,3 @@
-import pygame
-
 from Assets.colors import WHITE, BLUE, GREEN, ORANGE, RED, YELLOW
 from Classes.Utility.Qube import *
 from Classes.Utility.Shapes import *

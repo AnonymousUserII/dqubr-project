@@ -29,7 +29,7 @@ class Tab(Enum):
 # Window Properties
 _RES: tuple[int, int] = (1200, 660)
 _TITLE: str = "dQubr Project"
-_TICK_RATE: int = 120
+_TICK_RATE: int = 240
 
 # Program constants
 HISTORY_OVERFLOW: int = 24
@@ -46,20 +46,19 @@ for move in moves:
     qube_arrows[move] = pygame.image.load(path.join("Assets", "QubeArrows", f"{move}.png"))
 
 # Dictionary to hold keyboard graphics for the two-hand timer
-keyboard_img: dict[str, pygame.Surface] = {"none": pygame.image.load(path.join("Assets", "keyboard_base.png")),
-                                           "left": pygame.image.load(path.join("Assets", "keyboard_l.png")),
-                                           "right": pygame.image.load(path.join("Assets", "keyboard_r.png")),
-                                           "both": pygame.image.load(path.join("Assets", "keyboard_lr.png"))}
+keyboard_img: dict[str, pygame.Surface] = {}
+for perm in ("none", "left", "right", "both"):
+    keyboard_img[perm] = pygame.image.load(path.join("Assets", f"keyboard_{perm}.png"))
 
 # Retrieve leaderboard times from file
-with open(path.join("Data", "times.timmy")) as time_history:
+with open(path.join("Assets", "times.timmy"), 'r') as time_history:
     times: list = time_history.read().strip().split("\n")
-    leaderboard: list = []
-    for record in times:
-        if not record:  # If the line is blank
-            continue
-        (player, score) = record.split()
-        leaderboard.append((score, player))
+leaderboard: list = []
+for record in times:
+    if not record:  # If the line is blank
+        continue
+    (player, score) = record.split()
+    leaderboard.append((score, player))
 leaderboard.sort()
 
 
@@ -91,9 +90,9 @@ def program_window():
     pygame.mixer.Channel(2).set_volume(0.4)  # Cube Turns
     
     # Tab buttons
-    qube_tab_btn: TabButton = TabButton(window, (50, 10), (200, 60), "Virtual Qube")
-    time_tab_btn: TabButton = TabButton(window, (260, 10), (200, 60), "Times")
-    active_tab: int = Tab.TIME.value
+    qube_tab_btn: TabButton = TabButton(window, (50, 10), (200, 60), "Virtual Qube", "Play with a virtual qube")
+    time_tab_btn: TabButton = TabButton(window, (260, 10), (200, 60), "Times", "Use a real cube to set personal times")
+    active_tab: int = 0
 
     qube = Qube3()
     qube_size: int = 3
@@ -129,7 +128,7 @@ def program_window():
                            ToggleBox(window, (905, 125), DARK_GREY, 1, False),
                            TextBox(window, (955, 132), 18, "No", DARK_GREY),
                            
-                           # Cube Rendering Division
+                           # Qube Turning Buttons
                            ColoredBox(window, (40, 80), (780, 540), LAYER1_COLOR),
                            QubeButton(window, (328, 150), (300, 170), "L\'", 2),
                            QubeButton(window, (370, 150), (342, 170), "M\'", 3),
@@ -151,13 +150,14 @@ def program_window():
                            QubeButton(window, (280, 280), (180, 290), "F\'", 2),
                            QubeButton(window, (260, 238), (210, 260), "S\'", 3),
                            QubeButton(window, (240, 196), (240, 230), "B", 2),
-
-                           QubeButton(window, (90, 130), None, "x", 1),
-                           QubeButton(window, (132, 130), None, "y", 1),
-                           QubeButton(window, (174, 130), None, "z", 1),
-                           QubeButton(window, (90, 172), None, "x\'", 1),
-                           QubeButton(window, (132, 172), None, "y\'", 1),
-                           QubeButton(window, (174, 172), None, "z\'", 1),
+                           
+                           TextBox(window, (132, 105), 16, "Rotate whole qube", DARK_GREY),
+                           QubeButton(window, (90, 140), None, "x", 1),
+                           QubeButton(window, (132, 140), None, "y", 1),
+                           QubeButton(window, (174, 140), None, "z", 1),
+                           QubeButton(window, (90, 182), None, "x\'", 1),
+                           QubeButton(window, (132, 182), None, "y\'", 1),
+                           QubeButton(window, (174, 182), None, "z\'", 1),
                            
                            TextButton(window, (610, 100), (80, 40), "Reset", 18),
                            TextButton(window, (700, 100), (100, 40), "Scramble", 18),
@@ -200,8 +200,8 @@ def program_window():
                            TextBox(window, (300, 140), 18, "", WARN_RED),  # Prompt next to name
                            
                            # Keyboard Graphic
-                           ImageBox(window, (250, 500), (288, 69)),
-                           TextBox(window, (390, 600), 18, "Ready timer by holding a key on both sides", DARK_GREY),
+                           ImageBox(window, (230, 470), (350, 115)),
+                           TextBox(window, (400, 610), 18, "Ready timer by holding a key on both sides", DARK_GREY),
                            
                            # Timer shown
                            ColoredBox(window, (100, 200), (600, 160), LAYER1_COLOR),
@@ -212,8 +212,7 @@ def program_window():
                            TextBox(window, (600, 285), 100, "00", DARK_GREY, False, True))  # Centiseconds
     guis: tuple = qube_tab_gui, time_tab_gui
     
-    # Start with specific elements hidden
-    time_tab_gui[-11].hidden = True
+    time_tab_gui[-11].hidden = True  # Start with leaderboard saving button hidden
     
     # Cooldowns for keyboard shortcuts
     fc, xc, yc, zc, rc, lc, uc, dc, bc, mc, ec, sc = (False for _ in range(12))
@@ -221,6 +220,8 @@ def program_window():
     timer_cool = False
     tab_cool = False
     prev_cool, next_cool = False, False
+    
+    undo_start: float | None = None  # Records when the undo button is first pressed
     
     formatted_time: list = ["00", "00", "00"]  # Holds the minutes, seconds, and centiseconds of timer as strings
     input_box_active: bool = False  # Records when an input box is active on the times tab
@@ -236,17 +237,16 @@ def program_window():
         
         for i, tab_button in enumerate((qube_tab_btn, time_tab_btn)):
             tab_button.update(active_tab == i)  # Sets button to hover color if its tab is active
-            if tab_button.clicked and not active_tab == i:  # Prevent sound from playing if tab already selected
+            if tab_button.clicked and active_tab != i:  # Prevent sound from playing if tab already selected
                 active_tab = i
                 pygame.mixer.Channel(0).play(TAB_CLICK)
-                
-            tab_button.draw()
         
-        if active_tab == Tab.QUBE.value:
+        if active_tab == 0:
             primed: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
             try:  # Rotation keyboard shortcuts
                 if keys_pressed[pygame.K_f] and not fc:
                     qube.f(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("F" + ("\'" if primed else ""))
                     fc = True
                 elif not keys_pressed[pygame.K_f]:
@@ -254,6 +254,7 @@ def program_window():
                 
                 if keys_pressed[pygame.K_x] and not xc:
                     qube.x(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("x" + ("\'" if primed else ""))
                     xc = True
                 elif not keys_pressed[pygame.K_x]:
@@ -261,6 +262,7 @@ def program_window():
                 
                 if keys_pressed[pygame.K_y] and not yc:
                     qube.y(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("y" + ("\'" if primed else ""))
                     yc = True
                 elif not keys_pressed[pygame.K_y]:
@@ -268,6 +270,7 @@ def program_window():
                 
                 if keys_pressed[pygame.K_z] and not zc:
                     qube.z(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("z" + ("\'" if primed else ""))
                     zc = True
                 elif not keys_pressed[pygame.K_z]:
@@ -275,6 +278,7 @@ def program_window():
     
                 if keys_pressed[pygame.K_r] and not rc:
                     qube.r(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("R" + ("\'" if primed else ""))
                     rc = True
                 elif not keys_pressed[pygame.K_r]:
@@ -282,6 +286,7 @@ def program_window():
     
                 if keys_pressed[pygame.K_l] and not lc:
                     qube.l(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("L" + ("\'" if primed else ""))
                     lc = True
                 elif not keys_pressed[pygame.K_l]:
@@ -289,6 +294,7 @@ def program_window():
     
                 if keys_pressed[pygame.K_u] and not uc:
                     qube.u(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("U" + ("\'" if primed else ""))
                     uc = True
                 elif not keys_pressed[pygame.K_u]:
@@ -296,6 +302,7 @@ def program_window():
     
                 if keys_pressed[pygame.K_d] and not dc:
                     qube.d(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("D" + ("\'" if primed else ""))
                     dc = True
                 elif not keys_pressed[pygame.K_d]:
@@ -303,6 +310,7 @@ def program_window():
                 
                 if keys_pressed[pygame.K_b] and not bc:
                     qube.b(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("B" + ("\'" if primed else ""))
                     bc = True
                 elif not keys_pressed[pygame.K_b]:
@@ -310,6 +318,7 @@ def program_window():
                 
                 if keys_pressed[pygame.K_m] and not mc:
                     qube.m(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("M" + ("\'" if primed else ""))
                     mc = True
                 elif not keys_pressed[pygame.K_m]:
@@ -317,6 +326,7 @@ def program_window():
                 
                 if keys_pressed[pygame.K_e] and not ec:
                     qube.e(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("E" + ("\'" if primed else ""))
                     ec = True
                 elif not keys_pressed[pygame.K_e]:
@@ -324,12 +334,24 @@ def program_window():
                 
                 if keys_pressed[pygame.K_s] and not sc:
                     qube.s(primed)
+                    pygame.mixer.Channel(2).play(ROTATE)
                     move_history.append("S" + ("\'" if primed else ""))
                     sc = True
                 elif not keys_pressed[pygame.K_s]:
                     sc = False
             except AttributeError:
                 pass
+            
+            # Undo button clicking and holding
+            if qube_tab_gui[-6].clicked:  # Initial click
+                undo_start = time()
+            elif undo_start and pygame.mouse.get_pressed()[0]:  # Button is still being held
+                time_since_start: float = time() - undo_start
+                if time_since_start > 0.4:  # If held for more than 400 milliseconds
+                    qube_tab_gui[-6].clicked = True
+                    undo_start = time()
+            else:
+                undo_start = None
             
             try:  # Undo system
                 if keys_pressed[pygame.K_BACKQUOTE] and not undo_cool or qube_tab_gui[-6].clicked:
@@ -359,6 +381,7 @@ def program_window():
                     elif 'z' in move_history[-1]:
                         qube.z(prime)
                     move_history.pop(-1)
+                    pygame.mixer.Channel(1).play(CLICK)
                     undo_cool = True
                 elif not keys_pressed[pygame.K_BACKQUOTE]:
                     undo_cool = False
@@ -373,6 +396,9 @@ def program_window():
                 qube.apply_moves(scramble)
                 move_history = scramble
                 scrambled = True
+                pygame.mixer.Channel(2).set_volume(0.7)
+                pygame.mixer.Channel(2).play(ROTATE)
+                pygame.mixer.Channel(2).set_volume(0.4)
                 qube_tab_gui[-4].update_text("Moves to Scramble")
             
             if fc | xc | yc | zc | rc | lc | uc | dc | bc | mc | undo_cool:  # If a keyboard shortcut was used to turn
@@ -405,7 +431,7 @@ def program_window():
             reverse_history: int = 1 if scrambled else -1
             qube_tab_gui[-3].update_text(", ".join((move_history[:HISTORY_OVERFLOW * reverse_history:reverse_history]))
                                          + (", ..." if len(move_history) > HISTORY_OVERFLOW else ""))
-        elif active_tab == Tab.TIME.value:
+        elif active_tab == 1:
             if keys_pressed[pygame.K_TAB] and not tab_cool:  # Tab switching
                 shifted: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
                 if not shifted:
@@ -498,13 +524,16 @@ def program_window():
             time_tab_gui[-2].update_text(formatted_time[1])
             time_tab_gui[-1].update_text(formatted_time[2])
         
-        hovered_btn: str = ""
+        hovered_btn: str = ""  # For the QubeButtons
+        window.fill(BG_COLOR)
+        tooltips: list = [qube_tab_btn.draw(), time_tab_btn.draw()]
         pygame.draw.rect(window, FRAME_COLOR, pygame.Rect((20, 60), (1160, 580)), border_radius=20)  # Tab Background
+        
         for element in guis[active_tab]:  # Draw rest of GUI elements for the tab
             # Update GUI Elements
             try:
                 if type(element) == QubeButton:
-                    if active_tab == Tab.QUBE.value:
+                    if active_tab == 0:
                         move: str | None = element.update_state(qube_size, is_cube_form)
                         if element.hidden:
                             continue
@@ -522,7 +551,7 @@ def program_window():
                 if type(element) == ToggleBox:
                     if element.clicked:
                         pygame.mixer.Channel(1).play(CLICK)
-                    if active_tab == Tab.QUBE.value:
+                    if active_tab == 0:
                         if element.id == 0:
                             is_cube_form = element.state
                         elif element.id == 1:
@@ -530,7 +559,7 @@ def program_window():
                 elif type(element) == RadioButtons:
                     if element.changed:
                         pygame.mixer.Channel(1).play(CLICK)
-                    if active_tab == Tab.QUBE.value:
+                    if active_tab == 0:
                         old_q_size: int = qube_size
                         qube_size = element.selected + 1
                         # Update Qube Render
@@ -569,14 +598,15 @@ def program_window():
                         pygame.mixer.Channel(1).play(CLICK)
             except (AttributeError, TypeError):  # Element is static or requires an argument
                 if type(element) == ImageBox:
-                    if active_tab == Tab.QUBE.value and not hide_rotation_tips:  # Show corresponding arrows
+                    if active_tab == 0 and not hide_rotation_tips:  # Show corresponding arrows
                         form: str = "cube" if is_cube_form else "net"
                         rotation: str = hovered_btn.replace("\'", 'p').lower()
                         image_name: str = f"{form}_{rotation}"
                         element.update_state(qube_arrows[image_name] if hovered_btn else None)
                 pass
             
-            if len(time_tab_gui[2].text):  # If there is a name for the timer, hide warning prompts
+            if len(time_tab_gui[2].text) or timer_running or is_ready:
+                # Hide warning prompts for missing name
                 time_tab_gui[-10].update_text("")
                 time_tab_gui[-9].update_text("")
             if len(time_tab_gui[7].text) and len(time_tab_gui[8].text) and len(time_tab_gui[9].text):  # Adding a time
@@ -584,15 +614,19 @@ def program_window():
             
             # Draw GUI Elements
             try:
-                element.draw()
+                tooltips.append(element.draw())
             except TypeError:  # Is QubeRenderer
                 qube_tab_gui[-2].draw(qube)
                 if is_cube_form:
                     qube_tab_gui[-8].draw(qube, back_view=True)
         
+        for tooltip in tooltips:  # Draw the tooltips last
+            if tooltip:
+                tooltip.draw()
+        
         pygame.display.update()
-        _TICK_RATE = 480 if timer_running and active_tab == Tab.TIME.value and not input_box_active else 120
-        clock.tick(_TICK_RATE)
+        timer_updating: bool = timer_running & ~input_box_active  # If timer text is updating and can be stopped
+        clock.tick(_TICK_RATE * (4 if timer_updating else 1))
 
 
 if __name__ == '__main__':
