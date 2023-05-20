@@ -7,7 +7,7 @@ class TextBox:
                  left_aligned: bool = False, mono_font: bool = False):
         self.window: pygame.Surface = window
         self.pos, self.height, self.color, self.left_aligned = pos, height, color, left_aligned
-        self.font = join("Assets", "fcm.ttf" if mono_font else "od.otf")
+        self.font = join("Assets", "fcm.otf" if mono_font else "od.otf")
         self.label: pygame.Surface = pygame.font.Font(self.font, height)\
             .render(text, True, color)
         self.label_rect: pygame.Rect = self.label.get_rect(midleft=pos) if left_aligned else \

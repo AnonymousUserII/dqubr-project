@@ -8,7 +8,7 @@ class Tooltip:
                  text_size: int, text_color: pygame.Color, box_color: pygame.Color):
         self.window: pygame.Surface = window
         self.rect: pygame.Rect = pygame.Rect(pos, box_size)
-        self.label: pygame.Surface = pygame.font.Font(path.join("Assets", "fcm.ttf"), text_size)\
+        self.label: pygame.Surface = pygame.font.Font(path.join("Assets", "fcm.otf"), text_size)\
             .render(text, True, text_color)
         self.label_rect: pygame.Rect = self.label.get_rect(center=self.rect.center)
         self.box_color: pygame.Color = box_color

@@ -14,7 +14,7 @@ class TextButton(Button):
         super().__init__(window, pos, size)
         self.was_hover: bool = False  # Holds hover state for previous frame
         
-        self.label: pygame.Surface = pygame.font.Font(join("Assets", "fcm.ttf"), text_size)\
+        self.label: pygame.Surface = pygame.font.Font(join("Assets", "fcm.otf"), text_size)\
             .render(text, True, LIGHT_BLACK)
         self.label_rect: pygame.Rect = self.label.get_rect(center=self.rect.center)
         self.color: pygame.Color = REST_BTN_COLOR

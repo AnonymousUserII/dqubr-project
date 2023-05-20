@@ -17,7 +17,7 @@ class InputBox(Button):
             text_height, bg_color, active_color, text_color, max_length
         self.color: pygame.Color = bg_color
         self.text: str = ""
-        self.font: pygame.font = pygame.font.Font(join("Assets", "fcm.ttf"), text_height)
+        self.font: pygame.font = pygame.font.Font(join("Assets", "fcm.otf"), text_height)
         self.accepted: str = accepted_keys
         self.enabled: bool = False
         self.changed_enabled: bool = False
