@@ -54,4 +54,3 @@ class RadioButtons:
         for i, button in enumerate(self.buttons):
             button.draw(self.selected == i)
         return None
-

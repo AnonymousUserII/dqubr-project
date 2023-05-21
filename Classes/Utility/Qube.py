@@ -3,7 +3,11 @@ from random import random, choice
 from Classes.Utility.Face import *
 
 
-def generate_shuffle(size: int, moves: int = 40, contract_doubles: bool = False) -> list[str]:
+def generate_shuffle(size: int, moves: int = 20, contract_doubles: bool = False) -> list[str]:
+    """
+    Makes `moves` random moves and removes redundant moves
+    Returns the remaining list of moves
+    """
     possible_moves: list = ['R', 'L', 'U', 'D', 'F', 'B']  # Default
     if size == 1:
         possible_moves = ['x', 'y', 'z']
@@ -231,7 +235,7 @@ class Qube2:
                  d.rotated())
         return None
 
-    """The other rotations are combinations of the above 3"""
+    """The other rotations are combinations of the above 4"""
 
     def r(self, prime: bool = False) -> None:
         self.y()
@@ -294,12 +298,12 @@ class Qube2:
 
 class Qube3:
     def __init__(self):
-        self.up: Face3 = Face3(tuple(1 for _ in range(9)))
-        self.left: Face3 = Face3(tuple(2 for _ in range(9)))
-        self.front: Face3 = Face3(tuple(3 for _ in range(9)))
-        self.right: Face3 = Face3(tuple(4 for _ in range(9)))
-        self.back: Face3 = Face3(tuple(5 for _ in range(9)))
-        self.down: Face3 = Face3(tuple(6 for _ in range(9)))
+        self.up: Face3 = Face3([1 for _ in range(9)])
+        self.left: Face3 = Face3([2 for _ in range(9)])
+        self.front: Face3 = Face3([3 for _ in range(9)])
+        self.right: Face3 = Face3([4 for _ in range(9)])
+        self.back: Face3 = Face3([5 for _ in range(9)])
+        self.down: Face3 = Face3([6 for _ in range(9)])
     
     def reset(self) -> None:
         self.__init__()
@@ -343,19 +347,19 @@ class Qube3:
              ((d.ul, d.u, d.ur), (d.l, d.c, d.r), (d.dl, d.d, d.dr)),
              ((b.ur, b.u, b.ul), (b.r, b.c, b.l), (b.dr, b.d, b.dl)),
              ((u.ur, u.u, u.ul), (u.r, u.c, u.l), (u.dr, u.d, u.dl))) = \
-                ((u.up(), u.mid_h(), u.down()),
-                 (f.up(), f.mid_h(), f.down()),
-                 (d.down(), d.mid_h(), d.up()),
-                 (b.down(), b.mid_h(), b.up()))
+                ((u.up(), u.mid(), u.down()),
+                 (f.up(), f.mid(), f.down()),
+                 (d.down(), d.mid(), d.up()),
+                 (b.down(), b.mid(), b.up()))
         else:
             (((f.ul, f.u, f.ur), (f.l, f.c, f.r), (f.dl, f.d, f.dr)),
              ((u.ul, u.u, u.ur), (u.l, u.c, u.r), (u.dl, u.d, u.dr)),
              ((b.ur, b.u, b.ul), (b.r, b.c, b.l), (b.dr, b.d, b.dl)),
              ((d.ur, d.u, d.ul), (d.r, d.c, d.l), (d.dr, d.d, d.dl))) = \
-                ((d.up(), d.mid_h(), d.down()),
-                 (f.up(), f.mid_h(), f.down()),
-                 (u.down(), u.mid_h(), u.up()),
-                 (b.down(), b.mid_h(), b.up()))
+                ((d.up(), d.mid(), d.down()),
+                 (f.up(), f.mid(), f.down()),
+                 (u.down(), u.mid(), u.up()),
+                 (b.down(), b.mid(), b.up()))
         
         self.front, self.up, self.back, self.down = f, u, b, d
         return None
@@ -412,7 +416,7 @@ class Qube3:
         self.up, self.left, self.right, self.down = u, l, r, d
         return None
     
-    """The other rotations are combinations of the above 3"""
+    """The other rotations are combinations of the above 4"""
     
     def r(self, prime: bool = False) -> None:
         self.y()

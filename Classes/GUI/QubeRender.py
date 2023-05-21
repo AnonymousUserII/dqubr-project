@@ -99,7 +99,7 @@ class QubeRender:
                 front_tl: tuple[int, int] = self.pos[0] - int(1.5 * cell_length) - cell_spacing - 100, \
                                             self.pos[1] - int(1.5 * cell_length) - cell_spacing
                 # Draw front
-                for i, column in enumerate(zip(sides[0].up(), sides[0].mid_h(), sides[0].down())):
+                for i, column in enumerate(zip(sides[0].up(), sides[0].mid(), sides[0].down())):
                     pygame.draw.rect(self.window, colors[column[0]],
                                      pygame.Rect((i * full_dim + front_tl[0], front_tl[1]),
                                                  (cell_length, cell_length)))
@@ -113,7 +113,7 @@ class QubeRender:
                 if back_view:
                     # Draw bottom
                     bottom_tl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] + 3 * full_dim + cell_spacing
-                    for i, column in enumerate(zip(sides[1].down()[::-1], sides[1].mid_h()[::-1], sides[1].up()[::-1])):
+                    for i, column in enumerate(zip(sides[1].down()[::-1], sides[1].mid()[::-1], sides[1].up()[::-1])):
                         draw_bottom_parallelogram(self.window,
                                                (bottom_tl[0] + i * full_dim, bottom_tl[1]),
                                                cell_length, colors[column[0]])
@@ -127,7 +127,7 @@ class QubeRender:
                                                cell_length, colors[column[2]])
                     # Draw left
                     left_tl: tuple[int, int] = front_tl[0] + 3 * full_dim + cell_spacing, front_tl[1] + cell_spacing
-                    for i, column in enumerate(zip(sides[3].up(), sides[3].mid_h(), sides[3].down())):
+                    for i, column in enumerate(zip(sides[3].up(), sides[3].mid(), sides[3].down())):
                         draw_left_parallelogram(self.window,
                                                 (left_tl[0] + i * prlgrm_dim,
                                                  left_tl[1] + i * prlgrm_dim),
@@ -143,7 +143,7 @@ class QubeRender:
                 else:
                     # Draw top
                     top_dl: tuple[int, int] = front_tl[0] + cell_spacing, front_tl[1] - 2 * cell_spacing
-                    for i, column in enumerate(zip(sides[1].down(), sides[1].mid_h(), sides[1].up())):
+                    for i, column in enumerate(zip(sides[1].down(), sides[1].mid(), sides[1].up())):
                         draw_top_parallelogram(self.window,
                                                (top_dl[0] + i * full_dim, top_dl[1]),
                                                cell_length, colors[column[0]])
@@ -157,7 +157,7 @@ class QubeRender:
                                                cell_length, colors[column[2]])
                     # Draw right
                     right_tl: tuple[int, int] = front_tl[0] + 3 * full_dim + cell_spacing, front_tl[1] - cell_spacing
-                    for i, column in enumerate(zip(sides[3].up(), sides[3].mid_h(), sides[3].down())):
+                    for i, column in enumerate(zip(sides[3].up(), sides[3].mid(), sides[3].down())):
                         draw_right_parallelogram(self.window,
                                                  (right_tl[0] + i * prlgrm_dim,
                                                   right_tl[1] - i * prlgrm_dim),
@@ -219,7 +219,7 @@ class QubeRender:
                 )
     
                 for tl, side in zip(top_lefts, sides):
-                    for i, column in enumerate(zip(side.up(), side.mid_h(), side.down())):
+                    for i, column in enumerate(zip(side.up(), side.mid(), side.down())):
                         pygame.draw.rect(self.window, colors[column[0]],
                                          pygame.Rect((i * full_dim + tl[0], tl[1]),
                                                      (cell_length, cell_length)))

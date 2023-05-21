@@ -4,7 +4,7 @@ class Face1:
 
 
 class Face2:
-    def __init__(self, starting_cells: tuple):
+    def __init__(self, starting_cells: tuple | list):
         """
         Starting cells format:
         (ul, ur, dl, dr)
@@ -43,7 +43,7 @@ class Face2:
 
 
 class Face3:
-    def __init__(self, starting_cells: tuple):
+    def __init__(self, starting_cells: tuple | list):
         """
         Starting cells format:
         (ul, u, ur, l, c, r, dl, d, dr)
@@ -65,10 +65,7 @@ class Face3:
     def down(self) -> tuple:
         return self.dl, self.d, self.dr
     
-    def mid_v(self) -> tuple:
-        return self.u, self.c, self.d
-    
-    def mid_h(self) -> tuple:
+    def mid(self) -> tuple:
         return self.l, self.c, self.r
     
     def rotated(self, counterclockwise: bool = False) -> tuple[tuple, tuple, tuple]:
@@ -89,15 +86,3 @@ class Face3:
             (self.ur, self.u, self.ul), self.r, (self.dr, self.d, self.dl), self.l = \
                 self.left(), self.u, self.right(), self.d
         return None
-
-
-class Face4:  # Currently unused
-    def __init__(self, starting_cells: tuple):
-        """
-        Starting cells format:
-        (ul, u, ur, l, c, r, dl, d, dr)
-        ul u ur
-        l  c  r
-        dl d dr
-        """
-        

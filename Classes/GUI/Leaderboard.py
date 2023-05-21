@@ -171,4 +171,3 @@ class Leaderboard:
         else:
             self.empty_prompt.draw()
         return tooltip
-    
