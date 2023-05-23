@@ -12,6 +12,6 @@ class ImageBox:
         return None
         
     def draw(self) -> None:
-        if self.image is not None:
+        if self.image:
             self.window.blit(self.image, self.rect)
         return None

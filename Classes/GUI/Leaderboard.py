@@ -110,14 +110,16 @@ class Leaderboard:
         self.changed = False
         
         if len(self.entries):  # If there are entries on the leaderboard
-            self.decrement_btn.update()
-            self.increment_btn.update()
-            if self.decrement_btn.clicked:
-                if self.decrement_page():
-                    self.changed = True
-            if self.increment_btn.clicked:
-                if self.increment_page():
-                    self.changed = True
+            if self.index > 0:
+                self.decrement_btn.update()
+                if self.decrement_btn.clicked:
+                    if self.decrement_page():
+                        self.changed = True
+            if self.index < self.total_pages:
+                self.increment_btn.update()
+                if self.increment_btn.clicked:
+                    if self.increment_page():
+                        self.changed = True
             
             if not pygame.mouse.get_pressed()[0]:
                 self.click_cool = False
@@ -163,8 +165,10 @@ class Leaderboard:
         if len(self.entries):
             self.page_text.update_text(f"Page {self.index + 1} of {self.total_pages + 1}")
             self.page_text.draw()
-            self.decrement_btn.draw()
-            self.increment_btn.draw()
+            if self.index > 0:
+                self.decrement_btn.draw()
+            if self.index < self.total_pages:
+                self.increment_btn.draw()
             tooltip = self.delete_mode_btn.draw()
             self.delete_btn_label.draw()
             self.delete_prompt.draw()
