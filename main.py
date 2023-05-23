@@ -124,29 +124,26 @@ def program_window():
     # GUI elements of each tab
     qube_tab_gui: tuple = (TextBox(window, (1100, 600), 8, "Turning and turning...", HIDDEN_BLUE),
                            # Settings
-                           TextBox(window, (850, 300), 24, "Cube Size", DARK_GREY, True),
-                           RadioButtons(window, (870, 340), ("1x1x1", "2x2x2", "3x3x3"), DARK_GREY, 2),
+                           TextBox(window, (850, 340), 24, "Cube Size", DARK_GREY, True),
+                           RadioButtons(window, (870, 380), ("1x1x1", "2x2x2", "3x3x3"), DARK_GREY, 2),
                            
-                           TextBox(window, (1000, 300), 24, "Cube Style", DARK_GREY, True),
-                           TextBox(window, (1015, 337), 18, "Net", DARK_GREY, True),
-                           ToggleBox(window, (1055, 331), DARK_GREY, 0, False),
-                           TextBox(window, (1115, 338), 18, "Cube", DARK_GREY),
+                           TextBox(window, (1000, 340), 24, "Cube Style", DARK_GREY, True),
+                           TextBox(window, (1015, 377), 18, "Net", DARK_GREY, True),
+                           ToggleBox(window, (1055, 371), DARK_GREY, 0, False),
+                           TextBox(window, (1115, 378), 18, "Cube", DARK_GREY),
                            
                            TextBox(window, (850, 100), 24, "Hover Rotation Tips", DARK_GREY, True),
                            TextBox(window, (880, 131), 18, "Yes", DARK_GREY),
                            ToggleBox(window, (905, 125), DARK_GREY, 1, False),
                            TextBox(window, (955, 132), 18, "No", DARK_GREY),
                            
-                           TextBox(window, (850, 200), 24, "Key Rotation Layout", DARK_GREY, True),
-                           TextBox(window, (900, 231), 18, "Lettered", DARK_GREY),
-                           ToggleBox(window, (950, 225), DARK_GREY, 2, False),
-                           TextBox(window, (990, 232), 18, "Alternative", DARK_GREY, True),
+                           TextBox(window, (850, 180), 24, "Key Rotation Layout", DARK_GREY, True),
+                           TextBox(window, (900, 211), 18, "Lettered", DARK_GREY),
+                           ToggleBox(window, (950, 205), DARK_GREY, 2, False),
+                           TextBox(window, (990, 212), 18, "Alternative", DARK_GREY, True),
+                           ImageBox(window, (850, 230), (250, 82)),
                            
                            ColoredBox(window, (40, 80), (780, 540), LAYER1_COLOR),
-                           # Keyboard Layout Graphic
-                           TextBox(window, (170, 480), 16, "Keyboard Shortcuts", DARK_GREY, False, True),
-                           ImageBox(window, (50, 500), (250, 82)),
-                           
                            # Qube Turning Buttons
                            QubeButton(window, (328, 150), (300, 170), "L\'", 2),
                            QubeButton(window, (370, 150), (342, 170), "M\'", 3),
@@ -234,13 +231,13 @@ def program_window():
                            ColoredBox(window, (100, 200), (600, 160), LAYER1_COLOR),
                            TextBox(window, (300, 270), 100, ":", DARK_GREY),
                            TextBox(window, (500, 275), 100, ".", DARK_GREY),
-                           TextBox(window, (200, 285), 100, "00", DARK_GREY, False, True),  # Minutes
-                           TextBox(window, (400, 285), 100, "00", DARK_GREY, False, True),  # Seconds
-                           TextBox(window, (600, 285), 100, "00", DARK_GREY, False, True)  # Centiseconds
+                           # Minutes, seconds, centiseconds
+                           TextBox(window, (200, 285), 100, "00", DARK_GREY, False, True),
+                           TextBox(window, (400, 285), 100, "00", DARK_GREY, False, True),
+                           TextBox(window, (600, 285), 100, "00", DARK_GREY, False, True)
                            )
     guis: tuple = qube_tab_gui, time_tab_gui
-    
-    time_tab_gui[-11].hidden = True  # Start with leaderboard saving button hidden
+    time_tab_gui[-11].hidden = True  # Start with button to save time hidden
     
     # Cooldowns for keyboard shortcuts
     fc, xc, yc, zc, rc, lc, uc, dc, bc, mc, ec, sc = (False for _ in range(12))
@@ -874,7 +871,7 @@ def program_window():
                 time_tab_gui[-9].update_text("")
             if len(time_tab_gui[7].text) and len(time_tab_gui[8].text) and len(time_tab_gui[9].text):  # Adding a time
                 time_tab_gui[16].update_text("")
-            qube_tab_gui[17].update_state(keyboard_shortcuts["alternative" if alt_layout else "lettered"])
+            qube_tab_gui[15].update_state(keyboard_shortcuts["alternative" if alt_layout else "lettered"])
             
             # Draw GUI Elements
             try:
