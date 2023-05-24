@@ -34,8 +34,10 @@ for form in ("net", "cube"):
         moves.append(f"{form}_{rotation}")
         moves.append(f"{form}_{rotation}p")
 qube_arrows: dict[str, pygame.Surface] = {}
+pygame.display.init()
 for move in moves:
     qube_arrows[move] = pygame.image.load(path.join("Assets", "QubeArrows", f"{move}.png"))
+    qube_arrows[move].set_alpha(127)
 
 # Dictionary to hold keyboard graphics for the two-hand timer
 keyboard_img: dict[str, pygame.Surface] = {}
