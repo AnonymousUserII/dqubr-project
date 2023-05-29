@@ -17,12 +17,12 @@ def generate_shuffle(size: int, moves: int = 20, contract_doubles: bool = False)
     for _ in range(moves):
         random_moveset.append(choice(possible_moves))
         if round(random()) == 1:
-            random_moveset[-1] += "\'"  # 50/50 for move to be primed
+            random_moveset[-1] += "\'"  # 50% for move to be primed
     
     # Check for redundant moves
     move_string: str = ';'.join(random_moveset)
     for move in possible_moves:
-        # Remove four-in-a-row
+        # Remove four-in-a-rows
         while f"{move};{move};{move};{move}" in move_string:
             move_string = move_string.replace(f"{move};{move};{move};{move}", "")
             move_string.replace(";;", ";")
@@ -30,7 +30,7 @@ def generate_shuffle(size: int, moves: int = 20, contract_doubles: bool = False)
             move_string = move_string.replace(f"{move}\';{move}\';{move}\';{move}\'", "")
             move_string.replace(";;", ";")
         
-        # Remove consecutive reversals, e.g. D&D'
+        # Remove consecutive reversals, e.g. D;D'
         while f"{move};{move}\'" in move_string:
             move_string = move_string.replace(f"{move};{move}\'", "")
             move_string.replace(";;", ";")
@@ -38,7 +38,7 @@ def generate_shuffle(size: int, moves: int = 20, contract_doubles: bool = False)
             move_string = move_string.replace(f"{move}\';{move}", "")
             move_string.replace(";", ";")
         
-        # Contract triples then doubles
+        # Contract triples to their prime, e.g. D;D;D -> D'
         while f"{move};{move};{move}" in move_string:
             move_string = move_string.replace(f"{move};{move};{move}", "")
             move_string.replace(";;", ";")

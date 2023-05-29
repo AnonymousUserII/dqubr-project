@@ -1,6 +1,7 @@
 from os import path
 from time import perf_counter as time
 from contextlib import redirect_stdout
+
 with redirect_stdout(None):  # Load PyGame without welcome message
     import pygame
 
@@ -37,7 +38,7 @@ qube_arrows: dict[str, pygame.Surface] = {}
 pygame.display.init()
 for move in moves:
     qube_arrows[move] = pygame.image.load(path.join("Assets", "QubeArrows", f"{move}.png"))
-    qube_arrows[move].set_alpha(127)
+    qube_arrows[move].set_alpha(180)  # Set translucent
 
 # Dictionary to hold keyboard graphics for the two-hand timer
 keyboard_img: dict[str, pygame.Surface] = {}
@@ -99,11 +100,12 @@ def program_window():
     qube_tab_btn: TabButton = TabButton(window, (50, 10), (200, 60), "Virtual Qube", "Play with a virtual qube")
     time_tab_btn: TabButton = TabButton(window, (260, 10), (200, 60), "Times", "Use a real cube to set personal times")
     active_tab: int = 0
-
-    qube = Qube3()
+    
     qube_size: int = 3
     qube_types: tuple = Qube1, Qube2, Qube3
-    is_cube_form: bool = False
+    qube = qube_types[qube_size - 1]()
+    is_cube_form: bool = True
+    ghost_back_view: bool = True
     hide_rotation_tips: bool = False
     move_history: list[str] = []
     scrambled: bool = False  # If qube is freshly scrambled and no moves applied yet
@@ -127,25 +129,26 @@ def program_window():
     qube_tab_gui: tuple = (TextBox(window, (1100, 600), 8, "Turning and turning...", HIDDEN_BLUE),
                            # Settings
                            TextBox(window, (850, 340), 24, "Cube Size", DARK_GREY, True),
-                           RadioButtons(window, (870, 380), ("1x1x1", "2x2x2", "3x3x3"), DARK_GREY, 2),
-                           
-                           TextBox(window, (1000, 340), 24, "Cube Style", DARK_GREY, True),
+                           RadioButtons(window, (870, 380), ("1x1x1", "2x2x2", "3x3x3"), DARK_GREY, qube_size - 1),
+    
+                           TextBox(window, (1000, 340), 24, "Cube Form", DARK_GREY, True),
                            TextBox(window, (1015, 377), 18, "Net", DARK_GREY, True),
-                           ToggleBox(window, (1055, 371), DARK_GREY, 0, False),
+                           ToggleBox(window, (1055, 371), DARK_GREY, 0, is_cube_form),
                            TextBox(window, (1115, 378), 18, "Cube", DARK_GREY),
-                           
+    
                            TextBox(window, (850, 100), 24, "Hover Rotation Tips", DARK_GREY, True),
                            TextBox(window, (880, 131), 18, "Yes", DARK_GREY),
                            ToggleBox(window, (905, 125), DARK_GREY, 1, False),
                            TextBox(window, (955, 132), 18, "No", DARK_GREY),
-                           
-                           TextBox(window, (850, 180), 24, "Key Rotation Layout", DARK_GREY, True),
+    
+                           TextBox(window, (850, 180), 24, "Keybind Rotation Layout", DARK_GREY, True),
                            TextBox(window, (900, 211), 18, "Lettered", DARK_GREY),
                            ToggleBox(window, (950, 205), DARK_GREY, 2, False),
                            TextBox(window, (990, 212), 18, "Alternative", DARK_GREY, True),
                            ImageBox(window, (850, 230), (250, 82)),
-                           
+    
                            ColoredBox(window, (40, 80), (780, 540), LAYER1_COLOR),
+                           TextButton(window, (570, 170), (190, 30), "Toggle back view", 14, 3),
                            # Qube Turning Buttons
                            QubeButton(window, (328, 150), (300, 170), "L\'", 2),
                            QubeButton(window, (370, 150), (342, 170), "M\'", 3),
@@ -153,21 +156,21 @@ def program_window():
                            QubeButton(window, (328, 590), (228, 520), "L", 2),
                            QubeButton(window, (370, 590), (270, 520), "M", 3),
                            QubeButton(window, (412, 590), (312, 520), "R\'", 2),
-                           
+    
                            QubeButton(window, (150, 328), (120, 328), "U", 2),
                            QubeButton(window, (150, 370), (120, 370), "E\'", 3),
                            QubeButton(window, (150, 412), (120, 412), "D\'", 2),
                            QubeButton(window, (720, 328), (490, 258), "U\'", 2),
                            QubeButton(window, (720, 370), (490, 300), "E", 3),
                            QubeButton(window, (720, 412), (490, 342), "D", 2),
-                           
+    
                            QubeButton(window, (505, 196), (410, 400), "B\'", 2),
                            QubeButton(window, (485, 238), (380, 430), "S", 3),
                            QubeButton(window, (465, 280), (350, 460), "F", 2),
                            QubeButton(window, (280, 280), (180, 290), "F\'", 2),
                            QubeButton(window, (260, 238), (210, 260), "S\'", 3),
                            QubeButton(window, (240, 196), (240, 230), "B", 2),
-                           
+    
                            TextBox(window, (132, 105), 16, "Rotate whole qube", DARK_GREY),
                            QubeButton(window, (90, 140), None, "x", 1),
                            QubeButton(window, (132, 140), None, "y", 1),
@@ -175,31 +178,31 @@ def program_window():
                            QubeButton(window, (90, 182), None, "x\'", 1),
                            QubeButton(window, (132, 182), None, "y\'", 1),
                            QubeButton(window, (174, 182), None, "z\'", 1),
-                           
+    
                            TextButton(window, (610, 100), (80, 40), "Reset", 18),
                            TextButton(window, (700, 100), (100, 40), "Scramble", 18),
-                           
-                           TextBox(window, (680, 230), 28, "", DARK_GREY),
+    
+                           TextBox(window, (660, 230), 28, "", DARK_GREY),
                            QubeRender(window, (740, 330), qube_size, is_cube_form),
-                           
+    
                            ColoredBox(window, (565, 480), (600, 140), LAYER1_COLOR, True),
                            TextButton(window, (1080, 490), (70, 40), "Undo", 18),
                            TextBox(window, (492, 580), 14, "", DARK_GREY, True),  # Shows message when scrambled
                            TextBox(window, (492, 510), 36, "Move History", DARK_GREY, True),
                            TextBox(window, (495, 550), 16, "", DARK_GREY, True),  # Move history chain
-
+    
                            QubeRender(window, (370, 370), qube_size, is_cube_form),
                            ImageBox(window, (170, 170), (530, 400)))
     time_tab_gui: tuple = (TextBox(window, (400, 190), 9, "Times are a\'changing", HIDDEN_BLUE),
                            # Name input
                            TextBox(window, (50, 100), 40, "Name:", DARK_GREY, True),
                            InputBox(window, (200, 75), (200, 50), 40, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 7),
-                           
+    
                            # Leaderboard
                            ColoredBox(window, (800, 75), (365, 400), LAYER1_COLOR),
                            TextBox(window, (990, 110), 36, "Leaderboard", DARK_GREY),
                            Leaderboard(window, (820, 150), 14, DARK_GREY, leaderboard),
-                           
+    
                            # Add a time section
                            TextBox(window, (900, 510), 32, "Add a time", DARK_GREY),
                            InputBox(window, (810, 540), (50, 40), 32, LAYER1_COLOR, LAYER2_COLOR, DARK_GREY, 2, nums),
@@ -212,23 +215,23 @@ def program_window():
                            TextBox(window, (940, 558), 18, '.', DARK_GREY),
                            TextButton(window, (1030, 542), (36, 36), '+', 36, 2),
                            TextBox(window, (850, 615), 18, "", WARN_RED, True),  # Prompt to fill in all fields
-                           
+    
                            # Hover elements for time preparation
                            TextBox(window, (590, 85), 18, "Hover for Preparation", DARK_GREY),
                            TextButton(window, (450, 105), (120, 30), "Scramble", 14, 3, "", (600, 30)),
                            TextButton(window, (580, 105), (180, 30), f"Inspection ({INSPECTION_TIME}s)",
                                       14, 4, "", (120, 40)),
                            TextBox(window, (400, 400), 24, "", WARN_RED),  # Prompt for inspection timeout
-                           
+    
                            # Prompts to save player times
                            TextButton(window, (250, 380), (300, 50), "Save to Leaderboard", 24, 1),
                            TextBox(window, (400, 450), 18, "", WARN_RED),  # Prompt below button
                            TextBox(window, (300, 140), 18, "", WARN_RED),  # Prompt next to name
-                           
+    
                            # Keyboard Graphic
                            ImageBox(window, (230, 470), (350, 115)),
                            TextBox(window, (400, 610), 18, "Ready timer by holding a key on both sides", DARK_GREY),
-                           
+    
                            # Timer shown
                            ColoredBox(window, (100, 200), (600, 160), LAYER1_COLOR),
                            TextBox(window, (300, 270), 100, ":", DARK_GREY),
@@ -308,7 +311,7 @@ def program_window():
                         zc = True
                     elif not keys_pressed[pygame.K_z]:
                         zc = False
-        
+                    
                     if keys_pressed[pygame.K_r] and not rc:
                         qube.r(primed)
                         pygame.mixer.Channel(2).play(rotate)
@@ -316,7 +319,7 @@ def program_window():
                         rc = True
                     elif not keys_pressed[pygame.K_r]:
                         rc = False
-        
+                    
                     if keys_pressed[pygame.K_l] and not lc:
                         qube.l(primed)
                         pygame.mixer.Channel(2).play(rotate)
@@ -324,7 +327,7 @@ def program_window():
                         lc = True
                     elif not keys_pressed[pygame.K_l]:
                         lc = False
-        
+                    
                     if keys_pressed[pygame.K_u] and not uc:
                         qube.u(primed)
                         pygame.mixer.Channel(2).play(rotate)
@@ -332,7 +335,7 @@ def program_window():
                         uc = True
                     elif not keys_pressed[pygame.K_u]:
                         uc = False
-        
+                    
                     if keys_pressed[pygame.K_d] and not dc:
                         qube.d(primed)
                         pygame.mixer.Channel(2).play(rotate)
@@ -399,7 +402,7 @@ def program_window():
                         sc = True
                     elif not keys_pressed[pygame.K_i]:
                         sc = False
-
+                    
                     if keys_pressed[pygame.K_e] and not spc:
                         qube.s(True)
                         pygame.mixer.Channel(2).play(rotate)
@@ -407,7 +410,7 @@ def program_window():
                         spc = True
                     elif not keys_pressed[pygame.K_e]:
                         spc = False
-
+                    
                     if keys_pressed[pygame.K_o] and not bpc:
                         qube.b(True)
                         pygame.mixer.Channel(2).play(rotate)
@@ -415,7 +418,7 @@ def program_window():
                         bpc = True
                     elif not keys_pressed[pygame.K_o]:
                         bpc = False
-
+                    
                     if keys_pressed[pygame.K_w] and not bc:
                         qube.b()
                         pygame.mixer.Channel(2).play(rotate)
@@ -423,7 +426,7 @@ def program_window():
                         bc = True
                     elif not keys_pressed[pygame.K_w]:
                         bc = False
-
+                    
                     if keys_pressed[pygame.K_j] and not uc:
                         qube.u()
                         pygame.mixer.Channel(2).play(rotate)
@@ -431,7 +434,7 @@ def program_window():
                         uc = True
                     elif not keys_pressed[pygame.K_j]:
                         uc = False
-
+                    
                     if keys_pressed[pygame.K_f] and not upc:
                         qube.u(True)
                         pygame.mixer.Channel(2).play(rotate)
@@ -439,7 +442,7 @@ def program_window():
                         upc = True
                     elif not keys_pressed[pygame.K_f]:
                         upc = False
-                        
+                    
                     if keys_pressed[pygame.K_k] and not epc:
                         qube.e(True)
                         pygame.mixer.Channel(2).play(rotate)
@@ -455,7 +458,7 @@ def program_window():
                         ec = True
                     elif not keys_pressed[pygame.K_d]:
                         ec = False
-
+                    
                     if keys_pressed[pygame.K_l] and not dpc:
                         qube.d(True)
                         pygame.mixer.Channel(2).play(rotate)
@@ -463,7 +466,7 @@ def program_window():
                         dpc = True
                     elif not keys_pressed[pygame.K_l]:
                         dpc = False
-
+                    
                     if keys_pressed[pygame.K_s] and not dc:
                         qube.d()
                         pygame.mixer.Channel(2).play(rotate)
@@ -472,20 +475,20 @@ def program_window():
                     elif not keys_pressed[pygame.K_s]:
                         dc = False
                     
-                    if keys_pressed[pygame.K_n] and not rc:
+                    if keys_pressed[pygame.K_m] and not rc:
                         qube.r()
                         pygame.mixer.Channel(2).play(rotate)
                         move_history.append("R")
                         rc = True
-                    elif not keys_pressed[pygame.K_n]:
+                    elif not keys_pressed[pygame.K_m]:
                         rc = False
-
-                    if keys_pressed[pygame.K_v] and not rpc:
+                    
+                    if keys_pressed[pygame.K_n] and not rpc:
                         qube.r(True)
                         pygame.mixer.Channel(2).play(rotate)
                         move_history.append("R\'")
                         rpc = True
-                    elif not keys_pressed[pygame.K_v]:
+                    elif not keys_pressed[pygame.K_n]:
                         rpc = False
                     
                     if keys_pressed[pygame.K_8] and not mc:
@@ -495,7 +498,7 @@ def program_window():
                         mc = True
                     elif not keys_pressed[pygame.K_8]:
                         mc = False
-
+                    
                     if keys_pressed[pygame.K_3] and not mpc:
                         qube.m(True)
                         pygame.mixer.Channel(2).play(rotate)
@@ -504,20 +507,20 @@ def program_window():
                     elif not keys_pressed[pygame.K_3]:
                         mpc = False
                     
-                    if keys_pressed[pygame.K_m] and not lpc:
+                    if keys_pressed[pygame.K_c] and not lpc:
                         qube.l(True)
                         pygame.mixer.Channel(2).play(rotate)
                         move_history.append("L\'")
                         lpc = True
-                    elif not keys_pressed[pygame.K_m]:
+                    elif not keys_pressed[pygame.K_c]:
                         lpc = False
                     
-                    if keys_pressed[pygame.K_c] and not lc:
+                    if keys_pressed[pygame.K_v] and not lc:
                         qube.l()
                         pygame.mixer.Channel(2).play(rotate)
                         move_history.append("L")
                         lc = True
-                    elif not keys_pressed[pygame.K_c]:
+                    elif not keys_pressed[pygame.K_v]:
                         lc = False
                     
                     if keys_pressed[pygame.K_COMMA] and not xc:
@@ -527,7 +530,7 @@ def program_window():
                         xc = True
                     elif not keys_pressed[pygame.K_COMMA]:
                         xc = False
-
+                    
                     if keys_pressed[pygame.K_x] and not xpc:
                         qube.x(True)
                         pygame.mixer.Channel(2).play(rotate)
@@ -536,22 +539,22 @@ def program_window():
                     elif not keys_pressed[pygame.K_x]:
                         xpc = False
                     
-                    if keys_pressed[pygame.K_g] and not yc:
+                    if keys_pressed[pygame.K_h] and not yc:
                         qube.y()
                         pygame.mixer.Channel(2).play(rotate)
                         move_history.append("y")
                         yc = True
-                    elif not keys_pressed[pygame.K_g]:
+                    elif not keys_pressed[pygame.K_h]:
                         yc = False
-
-                    if keys_pressed[pygame.K_h] and not ypc:
+                    
+                    if keys_pressed[pygame.K_g] and not ypc:
                         qube.y(True)
                         pygame.mixer.Channel(2).play(rotate)
                         move_history.append("y\'")
                         ypc = True
-                    elif not keys_pressed[pygame.K_h]:
+                    elif not keys_pressed[pygame.K_g]:
                         ypc = False
-
+                    
                     if keys_pressed[pygame.K_y] and not zc:
                         qube.z()
                         pygame.mixer.Channel(2).play(rotate)
@@ -559,7 +562,7 @@ def program_window():
                         zc = True
                     elif not keys_pressed[pygame.K_y]:
                         zc = False
-
+                    
                     if keys_pressed[pygame.K_t] and not zpc:
                         qube.z(True)
                         pygame.mixer.Channel(2).play(rotate)
@@ -567,7 +570,7 @@ def program_window():
                         zpc = True
                     elif not keys_pressed[pygame.K_t]:
                         zpc = False
-
+                
                 except AttributeError:  # Move not available for size of cube
                     pass
             
@@ -576,7 +579,7 @@ def program_window():
                 undo_start = time()
             elif undo_start and pygame.mouse.get_pressed()[0]:  # Button is still being held
                 time_since_start: float = time() - undo_start
-                if time_since_start > 0.4:  # If held for more than 400 milliseconds
+                if time_since_start > 0.3:  # If held for more than 300 milliseconds
                     qube_tab_gui[-6].clicked = True
                     undo_start = time()
             else:
@@ -653,8 +656,14 @@ def program_window():
                 qube.reset()
                 move_history.clear()
             
-            # Show back view label only if cube form shown
-            qube_tab_gui[-9].update_text("Back View" if is_cube_form else "")
+            # Show certain parts if is_cube_form is true
+            if is_cube_form:
+                qube_tab_gui[-9].update_text("Internal Back View" if ghost_back_view else "Rotated Back View")
+                qube_tab_gui[17].hidden = False
+            else:
+                qube_tab_gui[-9].update_text("")
+                qube_tab_gui[17].hidden = True
+            # qube_tab_gui[-9].update_text("Backz View" if is_cube_form else "")
             
             # Update Move History text
             reverse_history: int = 1 if scrambled else -1
@@ -680,14 +689,12 @@ def program_window():
                 tab_cool = False
             
             # To skip keyboard hits when an inbox box is active
-            input_box_active = time_tab_gui[2].update_field(events) | \
-                               time_tab_gui[7].update_field(events) | \
-                               time_tab_gui[8].update_field(events) | \
-                               time_tab_gui[9].update_field(events)
+            input_box_active = time_tab_gui[2].update_field(events) | time_tab_gui[7].update_field(events) \
+                               | time_tab_gui[8].update_field(events) | time_tab_gui[9].update_field(events)
             if time_tab_gui[8].text:
                 if int(time_tab_gui[8].text) >= 60:  # If inputted seconds is greater than 60
                     time_tab_gui[8].text = "59"
-                    
+            
             if not input_box_active:
                 left_activated, right_activated = False, False
                 for key in left_keys:
@@ -836,6 +843,8 @@ def program_window():
                                     time_tab_gui[-9].update_text("Fill in name here")
                             else:
                                 time_tab_gui[16].update_text("Please fill in all fields")
+                        elif element.identifier == 3:  # Toggle back view type
+                            ghost_back_view = not ghost_back_view
                     if element.hover:
                         if element.identifier == 3:
                             if element.clicked or not element.was_hover:  # If it is a new hover or clicked
@@ -881,7 +890,7 @@ def program_window():
             except TypeError:  # Is QubeRenderer
                 qube_tab_gui[-2].draw(qube)
                 if is_cube_form:
-                    qube_tab_gui[-8].draw(qube, back_view=True)
+                    qube_tab_gui[-8].draw(qube, back_view=True, see_through=ghost_back_view)
         
         for tooltip in tooltips:  # Draw the tooltips last
             if tooltip:
