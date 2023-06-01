@@ -263,6 +263,7 @@ def program_window():
     running: bool = True
     while running:
         events: list[pygame.event] = pygame.event.get()
+        time_of_frame: float = time()
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
@@ -275,7 +276,7 @@ def program_window():
                 active_tab = i
                 pygame.mixer.Channel(0).play(tab_click)
         
-        if active_tab == 0:  # Virtual Qube tab
+        if active_tab == 0:  # Virtual Qube tab (Update Qube)
             # Rotation keyboard shortcuts
             if not alt_layout:
                 primed: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
@@ -576,12 +577,12 @@ def program_window():
             
             # Undo button clicking and holding
             if qube_tab_gui[-6].clicked:  # Initial click
-                undo_start = time()
+                undo_start = time_of_frame
             elif undo_start and pygame.mouse.get_pressed()[0]:  # Button is still being held
-                time_since_start: float = time() - undo_start
+                time_since_start: float = time_of_frame - undo_start
                 if time_since_start > 0.3:  # If held for more than 300 milliseconds
                     qube_tab_gui[-6].clicked = True
-                    undo_start = time()
+                    undo_start = time_of_frame
             else:
                 undo_start = None
             
@@ -663,13 +664,12 @@ def program_window():
             else:
                 qube_tab_gui[-9].update_text("")
                 qube_tab_gui[17].hidden = True
-            # qube_tab_gui[-9].update_text("Backz View" if is_cube_form else "")
-            
+
             # Update Move History text
             reverse_history: int = 1 if scrambled else -1
             qube_tab_gui[-3].update_text(", ".join((move_history[:HISTORY_OVERFLOW * reverse_history:reverse_history]))
                                          + (", ..." if len(move_history) > HISTORY_OVERFLOW else ""))
-        elif active_tab == 1:  # Times tab
+        elif active_tab == 1:  # Times tab (Update Timer)
             if keys_pressed[pygame.K_TAB] and not tab_cool:  # Tab switching
                 shifted: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
                 if not shifted:
@@ -740,14 +740,14 @@ def program_window():
                         if is_ready:
                             is_ready = False
                             timer_running = True
-                            start_time = time()
+                            start_time = time_of_frame
                             current_time = start_time
                             time_tab_gui[-7].update_text("Press a key on both sides to stop timer")
                         elif not (left_activated and right_activated):
                             timer_cool = False
                             time_tab_gui[-7].update_text("Ready timer by pressing a key on both sides")
                 else:
-                    current_time = time()
+                    current_time = time_of_frame
                     if left_activated and right_activated:
                         timer_running = False
                         timer_cool = True
@@ -758,7 +758,7 @@ def program_window():
             display_time: tuple = process_time(current_time - start_time)
             
             if inspection_running:
-                inspection_remaining = INSPECTION_TIME - (time() - inspection_start)
+                inspection_remaining = INSPECTION_TIME - (time_of_frame - inspection_start)
                 inspect_formatted = process_time(inspection_remaining)
                 mins, sec, cs = inspect_formatted
                 mins, sec, cs = ("%02d" % unit for unit in (int(mins), int(sec), int(cs)))
@@ -851,14 +851,13 @@ def program_window():
                                 element.tooltip = ", ".join(generate_shuffle(2, 20, True))
                         if element.identifier == 4:
                             if not timer_running and element.clicked:
-                                inspection_start = time()
+                                inspection_start = time_of_frame
                                 inspection_running = True
                             else:
                                 if timer_running or is_ready:
                                     element.tooltip = "Timer running"
                                 else:
-                                    element.tooltip = "Start time" if not inspection_running \
-                                        else "Reset time"
+                                    element.tooltip = "Start time" if not inspection_running else "Reset time"
                 elif type(element) == Leaderboard:
                     if element.changed:
                         pygame.mixer.Channel(1).play(click)
