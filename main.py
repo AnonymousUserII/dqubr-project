@@ -91,10 +91,12 @@ def program_window():
     click: pygame.mixer.Sound = pygame.mixer.Sound(path.join("Assets", "Sounds", "click.wav"))
     tab_click: pygame.mixer.Sound = pygame.mixer.Sound(path.join("Assets", "Sounds", "tab_click.wav"))
     rotate: pygame.mixer.Sound = pygame.mixer.Sound(path.join("Assets", "Sounds", "turn.wav"))
+    error: pygame.mixer.Sound = pygame.mixer.Sound(path.join("Assets", "Sounds", "bass.wav"))
     
     pygame.mixer.Channel(0).set_volume(0.1)  # TabButtons
     pygame.mixer.Channel(1).set_volume(0.3)  # TextButtons
     pygame.mixer.Channel(2).set_volume(0.4)  # Cube Turns
+    pygame.mixer.Channel(3).set_volume(0.6)  # Error sound
     
     # Tab buttons
     qube_tab_btn: TabButton = TabButton(window, (50, 10), (200, 60), "Virtual Qube", "Play with a virtual qube")
@@ -224,7 +226,7 @@ def program_window():
                            TextBox(window, (400, 400), 24, "", WARN_RED),  # Prompt for inspection timeout
     
                            # Prompts to save player times
-                           TextButton(window, (250, 380), (300, 50), "Save to Leaderboard", 24, 1),
+                           TextButton(window, (250, 380), (300, 50), "Save to Leaderboard", 24, 1, saving=True),
                            TextBox(window, (400, 450), 18, "", WARN_RED),  # Prompt below button
                            TextBox(window, (300, 140), 18, "", WARN_RED),  # Prompt next to name
     
@@ -256,6 +258,7 @@ def program_window():
     inspection_start: float = time()  # Records when inspection time starts
     inspection_running: bool = False  # States when the inspection timer takes over the normal timer
     inspection_remaining: float = INSPECTION_TIME  # Holds amount of inspection time left
+    unaddressed_error: dict[str, bool] = {"name": False, "fields": False}  # Holds if error for adding time is addressed
     
     formatted_time: list = ["00", "00", "00"]  # Holds the minutes, seconds, and centiseconds of timer as strings
     input_box_active: bool  # Records when an input box is active on the times tab
@@ -830,9 +833,10 @@ def program_window():
                                 time_string: str = f"{formatted_time[0]}:{formatted_time[1]}.{formatted_time[2]}"
                                 time_tab_gui[5].add((time_string, time_tab_gui[2].text))
                             else:  # Then prompt user for name
+                                pygame.mixer.Channel(3).play(error)
                                 time_tab_gui[-10].update_text("Please fill in a name to save this time")
                                 time_tab_gui[-9].update_text("Fill in name here")
-                        elif element.identifier == 2:  # Same thing for adding a time
+                        elif element.identifier == 2:  # Same thing for manually adding a time
                             if len(time_tab_gui[7].text) and len(time_tab_gui[8].text) and len(time_tab_gui[9].text):
                                 if len(time_tab_gui[2].text):  # Check for name
                                     mins, sec, cs = time_tab_gui[7].text, time_tab_gui[8].text, time_tab_gui[9].text
@@ -840,9 +844,14 @@ def program_window():
                                     time_string: str = f"{mins}:{sec}.{cs}"
                                     time_tab_gui[5].add((time_string, time_tab_gui[2].text))
                                 else:
-                                    time_tab_gui[-9].update_text("Fill in name here")
+                                    pygame.mixer.Channel(3).play(error)
+                                    unaddressed_error["name"] = True
+                                    # time_tab_gui[-9].update_text("Fill in name here")
+                                    # time_tab_gui[16].update_text("Please fill in a name to save this time")
                             else:
-                                time_tab_gui[16].update_text("Please fill in all fields")
+                                pygame.mixer.Channel(3).play(error)
+                                unaddressed_error["fields"] = True
+                                # time_tab_gui[16].update_text("Please fill in all fields")
                         elif element.identifier == 3:  # Toggle back view type
                             ghost_back_view = not ghost_back_view
                     if element.hover:
@@ -877,10 +886,13 @@ def program_window():
             
             if len(time_tab_gui[2].text) or timer_running or is_ready:
                 # Hide warning prompts for missing name
+                unaddressed_error["name"] = False
                 time_tab_gui[-10].update_text("")
                 time_tab_gui[-9].update_text("")
             if len(time_tab_gui[7].text) and len(time_tab_gui[8].text) and len(time_tab_gui[9].text):  # Adding a time
-                time_tab_gui[16].update_text("")
+                unaddressed_error["fields"] = False
+            time_tab_gui[16].update_text("Please fill in all fields" if unaddressed_error["fields"]
+                                         else "Please fill in a name" if unaddressed_error["name"] else "")
             qube_tab_gui[15].update_state(keyboard_shortcuts["alternative" if alt_layout else "lettered"])
             
             # Draw GUI Elements
