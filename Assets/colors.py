@@ -13,8 +13,8 @@ HOVER_BTN_COLOR: pygame.Color = pygame.Color(0xD0, 0xD0, 0xD0)
 HIDDEN_BLUE: pygame.Color = pygame.Color(0x70, 0xB9, 0xF0)
 WARN_RED: pygame.Color = pygame.Color(0xE0, 0x60, 0x60)
 FADED_GREY: pygame.Color = pygame.Color(0x20, 0x20, 0x20)
-REST_SAV_COLOR: pygame.Color = pygame.Color(0xF0, 0xF0, 0x40)
-HOVER_SAV_COLOR: pygame.Color = pygame.Color(0xFF, 0xFF, 0x60)
+REST_SAV_COLOR: pygame.Color = pygame.Color(0xF0, 0xF0, 0x80)
+HOVER_SAV_COLOR: pygame.Color = pygame.Color(0xFF, 0xFF, 0x90)
 
 # Cell Colors
 WHITE: pygame.Color = pygame.Color(0xFF, 0xFF, 0xFF)

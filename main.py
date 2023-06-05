@@ -23,7 +23,7 @@ from Classes.Utility.Qube import *
 _RES: tuple[int, int] = (1200, 660)
 _TITLE: str = "dQubr Project"
 _ICON: pygame.Surface = pygame.image.load(path.join("Assets", "dqube.png"))
-_TICK_RATE: int = 240
+_TICK_RATE: int = 120
 # Constants
 HISTORY_OVERFLOW: int = 24
 INSPECTION_TIME: int = 15
@@ -60,7 +60,6 @@ for record in times:
         continue
     (player, score) = record.split()
     leaderboard.append((score, player))
-leaderboard.sort()
 
 
 def process_time(t: float) -> tuple[int, int, int]:
@@ -219,7 +218,7 @@ def program_window():
                            TextBox(window, (850, 615), 18, "", WARN_RED, True),  # Prompt to fill in all fields
     
                            # Hover elements for time preparation
-                           TextBox(window, (590, 85), 18, "Hover for Preparation", DARK_GREY),
+                           TextBox(window, (600, 85), 18, "Preparation Utilities", DARK_GREY),
                            TextButton(window, (450, 105), (120, 30), "Scramble", 14, 3, "", (600, 30)),
                            TextButton(window, (580, 105), (180, 30), f"Inspection ({INSPECTION_TIME}s)",
                                       14, 4, "", (120, 40)),
@@ -672,7 +671,7 @@ def program_window():
             reverse_history: int = 1 if scrambled else -1
             qube_tab_gui[-3].update_text(", ".join((move_history[:HISTORY_OVERFLOW * reverse_history:reverse_history]))
                                          + (", ..." if len(move_history) > HISTORY_OVERFLOW else ""))
-        elif active_tab == 1:  # Times tab (Update Timer)
+        else:  # Times tab (Update Timer)
             if keys_pressed[pygame.K_TAB] and not tab_cool:  # Tab switching
                 shifted: bool = keys_pressed[pygame.K_LSHIFT] | keys_pressed[pygame.K_RSHIFT]
                 if not shifted:
@@ -777,6 +776,16 @@ def program_window():
             
             time_tab_gui[20].update_text("Inspection time expired" if inspection_remaining <= 0 and inspection_running
                                          else "")
+            
+            if len(time_tab_gui[2].text) or timer_running or is_ready:
+                # Hide warning prompts for missing name
+                unaddressed_error["name"] = False
+                time_tab_gui[-10].update_text("")
+                time_tab_gui[-9].update_text("")
+            if len(time_tab_gui[7].text) and len(time_tab_gui[8].text) and len(time_tab_gui[9].text):  # Adding a time
+                unaddressed_error["fields"] = False
+            time_tab_gui[16].update_text("Please fill in all fields" if unaddressed_error["fields"]
+                                         else "Please fill in a name" if unaddressed_error["name"] else "")
         
         window.fill(BG_COLOR)
         tooltips: list = [qube_tab_btn.draw(), time_tab_btn.draw()]
@@ -791,7 +800,7 @@ def program_window():
                         btn_label: str | None = element.update_state(qube_size, is_cube_form)
                         if element.hidden:
                             continue
-                        
+
                         if element.hover and not pygame.mouse.get_pressed()[0]:
                             hovered_btn = element.text
                         if btn_label is not None:
@@ -882,18 +891,8 @@ def program_window():
                         rot_type: str = hovered_btn.replace("\'", 'p').lower()
                         image_name: str = f"{shape}_{rot_type}"
                         element.update_state(qube_arrows[image_name] if hovered_btn else None)
-                pass
-            
-            if len(time_tab_gui[2].text) or timer_running or is_ready:
-                # Hide warning prompts for missing name
-                unaddressed_error["name"] = False
-                time_tab_gui[-10].update_text("")
-                time_tab_gui[-9].update_text("")
-            if len(time_tab_gui[7].text) and len(time_tab_gui[8].text) and len(time_tab_gui[9].text):  # Adding a time
-                unaddressed_error["fields"] = False
-            time_tab_gui[16].update_text("Please fill in all fields" if unaddressed_error["fields"]
-                                         else "Please fill in a name" if unaddressed_error["name"] else "")
-            qube_tab_gui[15].update_state(keyboard_shortcuts["alternative" if alt_layout else "lettered"])
+                    # Update keybind graphic
+                    qube_tab_gui[15].update_state(keyboard_shortcuts["alternative" if alt_layout else "lettered"])
             
             # Draw GUI Elements
             try:
