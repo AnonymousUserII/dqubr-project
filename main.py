@@ -846,12 +846,12 @@ def program_window():
                                 else:
                                     pygame.mixer.Channel(3).play(error)
                                     unaddressed_error["name"] = True
-                                    # time_tab_gui[-9].update_text("Fill in name here")
-                                    # time_tab_gui[16].update_text("Please fill in a name to save this time")
+                                    time_tab_gui[-9].update_text("Fill in name here")
+                                    time_tab_gui[16].update_text("Please fill in a name to save this time")
                             else:
                                 pygame.mixer.Channel(3).play(error)
                                 unaddressed_error["fields"] = True
-                                # time_tab_gui[16].update_text("Please fill in all fields")
+                                time_tab_gui[16].update_text("Please fill in all fields")
                         elif element.identifier == 3:  # Toggle back view type
                             ghost_back_view = not ghost_back_view
                     if element.hover:
