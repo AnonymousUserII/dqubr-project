@@ -9,7 +9,11 @@ Some random application for cubers. Made in Python because.
 - Timer to simulate a two-handed timer + time history
 
 ## Keyboard Controls
-Cube turning is processed in SiGN notation. Use SHIFT for prime variant.
+In standard keybinds, the input is SiGN notation. Use SHIFT for prime variant.
+
+For the alternative keybinds, a layout reflective of cube turning is provided.
+
+A keyboard map is shown.
 
 |  Feature | Key(s) |
 |---------:|:-------|
